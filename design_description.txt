@@ -11,13 +11,14 @@ A Bus is an Object which has:
 
 A NotificationSystem is an Object which has interfaces:
 1) Notification - for submitting an Event;
-2) for notifying subscribers about the event;
+2) Environment - for notifying subscribers about the event;
 A NotificationSystem uses Human's Attention to notify Human about events.
 A Notifier is a Role which is supplied with and can use Notification interface (?)
 
-Human is an Object which has:
-+ attention() interface;
-+ setRole() method;
+Human is an Interface which has:
++ Attention getAttention() interface method;
++ setRole(Role) method;
++ setEnvironment(Environment) method;
 
 Attention is an Interface for be notified() about Events. (? Substitute Notification with Attention?)
 Attention uses currentBehaviour for delegating Event processing. (pattern name?)
