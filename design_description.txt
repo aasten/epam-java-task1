@@ -85,6 +85,9 @@ Bus uses Station from Route it arrived in to use its Notification interface to n
 
 Passengers which are at the station are notified about BusArrivedToStationEvent. 
 
+Bus lifecycle is runned as daemon thread.
+Every passenger lifecycle is runned as normal thread.
+
 
 Initialization is a process (runnable object) which:
 -|gets settings from property file;
