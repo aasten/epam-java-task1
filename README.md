@@ -1,2 +1,2 @@
 # epam-java-task1
-https://mail.google.com/mail/u/0/#search/from%3Aepam.com/157d8a959eb6e7a6?projector=1
+https://docs.google.com/document/d/1y75de0en98Q9PJ69Ef2z4VxWHr78w3IT2TJT_ec9U-Q/edit
