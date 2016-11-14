@@ -1,5 +1,8 @@
 package com.github.aasten.transportconcurrent.human;
 
-public class Human {
+import com.github.aasten.transportconcurrent.system.Role;
 
+public interface Human {
+    Attention getAttention();
+    Role getRole();
 }
