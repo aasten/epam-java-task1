@@ -1,0 +1,93 @@
+A Bus is an Object which has:
+-a BusRole;
+-a driver;
+-capacity which is at any time equals to sum of:
+ -count of free places;
+ -count of taken places;
++ the full() flag
++a notification system;
+-a place of bus; (? has?)
++an immutable non-empty list of Door objects;
+
+A NotificationSystem is an Object which has interfaces:
+1) Notification - for submitting an Event;
+2) Environment - for notifying subscribers about the event;
+A NotificationSystem uses Human's Attention to notify Human about events.
+A Notifier is a Role which is supplied with and can use Notification interface (?)
+
+Human is an Interface which has:
++ Attention getAttention() interface method;
++ setRole(Role) method;
++ setEnvironment(Environment) method;
+
+Attention is an Interface for be notified() about Events. (? Substitute Notification with Attention?)
+Attention uses currentBehaviour for delegating Event processing. (pattern name?)
+
+Role is an Object which has:
++ attention interface
+# setCurrentBehaviour method
+
+A PlaceDependentRole is a Role which changes behaviour according current place was set via currentPlace() method.
+
+A Passenger is a Human which has:
+-a PassengerRole;
++a destinationStation;
+-a currentPlace.
+A currentPlace is a PassengerPlace which may be one of:
+AT_THE_DEPARTURE_STATION;
+INSIDE_THE_BUS;
+AT_THE_ARRIVING_STATION;
+
+A Driver is a Human which has a DriverRole.
+
+PassengerRole is a PlaceDependentRole which may have as a currentBehaviour such Behaviours:
+-AtTheDepartureStationPassengerBehaviour;
+-InsideABusPassengerBehaviour;
+-AtTheArrivingStationPassengerBehaviour;
+
+AtTheDepartureStationPassengerBehaviour is a Behaviour. 
+This behaviour reacts on BusArrivedToStationEvent. 
+
+A DriverRole is a Role which has a:
+-DriverBehaviour.
+
+
+InsideABus is a Behaviour which reacts onEvent in such a way:
+use 
+
+
+
+
+
+A Door is an object which if DoorState is OPENED and nobody uses doors now, can change: 
+  Passenger's Place:
+    from OutsideAtTheStation to InsideTheBus if Bus#full() is false;
+    from InsideTheBus to OutsideAtTheStation;
+A Door has tryEnter() and exit() methods.
+A Door object is constructed with DoorManagement object.
+A DoorManagement is an object which is supplied (constructed) with DoorState object which it can change by DoorManagement#open() or DoorManagement#close() methods.
+A Door object has DoorState which is to be modified by DoorManagement (DI in constructor).
+
+A DoorState is one of:
+OPENED;
+CLOSED.
+
+The Door is to pass one Passenger while he uses it. Doors which can pass two passengers at the time are treated as two objects of Door.
+
+A Driver uses DoorManagement of each Door object in bus' immutable list to switch DoorState. This action is a DriverBehaviour reaction onEvent BusArrivedToStationEvent.
+
+
+A place of bus may be:
+at the station;
+on the road;
+
+Bus uses Station from Route it arrived in to use its Notification interface to notify about BusArrivedToStationEvent.
+
+Passengers which are at the station are notified about BusArrivedToStationEvent. 
+
+
+Initialization is a process (runnable object) which:
+-|gets settings from property file;
+-|creates objects according to the settings 
+ 
+
