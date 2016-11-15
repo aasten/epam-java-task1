@@ -1,19 +1,30 @@
 package com.github.aasten.transportconcurrent.objects;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 
+import org.slf4j.LoggerFactory;
+
+import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
+import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent.EventType;
 import com.github.aasten.transportconcurrent.human.Attention;
 import com.github.aasten.transportconcurrent.human.Passenger;
 
-public class Bus implements Environment {
+// TODO seems to have to many tasks
+public class Bus implements EventEnvironment {
 
     private List<Attention> notifiable;
     private final int CAPACITY;
     private final List<Doors> doors;
+    private final Queue<Event> eventQueue = new ArrayDeque<Event>();
+    private Station currentStation;
+    private Route route;
     
-    public Bus(int capacity, int doorsCount) {
+    public Bus(int capacity, int doorsCount, Route route) {
         this.CAPACITY = capacity;
         notifiable = new ArrayList<Attention>(capacity);
         if(doorsCount < 1) {
@@ -21,6 +32,7 @@ public class Bus implements Environment {
             doorsCount = 1;
         }
         doors = Collections.unmodifiableList(createDoorsList(doorsCount, this));
+        currentStation = route.getFirst().next().nextStation;
     }
     
     private static List<Doors> createDoorsList(int doorsCount, Bus bus) {
@@ -40,7 +52,10 @@ public class Bus implements Environment {
     boolean enter(Passenger passenger) {
         synchronized(notifiable) {
             if(notifiable.size() < CAPACITY) {
-                notifiable.add(passenger.getAttention());
+                subscribeToEvents(passenger.getAttention());
+                notifyAbout(new PassengerBusStationEvent(
+                            passenger, this, currentStation, 
+                            EventType.PASSENGER_ENTERED_BUS));
                 return true;
             }
             return false;
@@ -49,7 +64,7 @@ public class Bus implements Environment {
     
     void exit(Passenger passenger) {
         synchronized(notifiable) {
-            notifiable.remove(passenger.getAttention());
+            unSubscribe(passenger.getAttention());
         }
     }
     
@@ -58,12 +73,48 @@ public class Bus implements Environment {
     }
 
     public void subscribeToEvents(Attention attention) {
-        
+        synchronized(notifiable) {
+            notifiable.add(attention);
+        }
     }
 
     public void unSubscribe(Attention attention) {
-        // TODO Auto-generated method stub
-        
+        synchronized(notifiable) {
+            notifiable.remove(attention);
+        }
+    }
+
+    public void notifyAbout(Event event) {
+        synchronized(eventQueue) {
+            eventQueue.add(event);
+        }
+        // actually, notifyOne might be used for the one-threaded launchInfinitely() call
+        // but keeping to be not dependent on this single-threading processing 
+        eventQueue.notifyAll(); 
+    }
+
+    public void launchInfinitely() {
+        while(true) {
+            Event currentEvent = takeEvent();
+            for(Attention attention : notifiable) {
+                attention.notifyAbout(currentEvent);
+            }
+        }
+    }
+    
+    private Event takeEvent() {
+        synchronized (eventQueue) {
+            if(eventQueue.isEmpty()) {
+                try {
+                    eventQueue.wait();
+                } catch (InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+                }
+            }
+            // TODO optimizing extraction of subset of actually handled events 
+            // may be here
+            return eventQueue.poll();
+        }
     }
     
     

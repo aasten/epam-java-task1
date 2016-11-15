@@ -1,8 +1,9 @@
 package com.github.aasten.transportconcurrent.objects;
 
+import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.human.Attention;
 
-public class Station implements Environment {
+public class Station implements EventEnvironment {
     
     private final String name; 
     
@@ -20,6 +21,16 @@ public class Station implements Environment {
     }
 
     public void unSubscribe(Attention attention) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void notifyAbout(Event event) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    public void launchInfinitely() {
         // TODO Auto-generated method stub
         
     }

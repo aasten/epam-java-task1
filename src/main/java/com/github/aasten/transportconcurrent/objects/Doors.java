@@ -5,6 +5,7 @@ import java.util.Queue;
 
 import com.github.aasten.transportconcurrent.human.Passenger;
 
+// TODO implement EventEnvironment (bus will subscribe to move next station)
 public class Doors {
     
     private Bus bus;

@@ -2,6 +2,7 @@ package com.github.aasten.transportconcurrent.system;
 
 import com.github.aasten.transportconcurrent.human.Behavior;
 
+@Deprecated
 public class PassengerRole implements Role {
 
     private Behavior currentBehavior;
