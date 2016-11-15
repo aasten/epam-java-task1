@@ -1,8 +1,8 @@
 package com.github.aasten.transportconcurrent.human;
 
-import com.github.aasten.transportconcurrent.system.Role;
-
-public interface Human {
-    Attention getAttention();
-    Role getRole();
+public abstract class Human {
+    public abstract Attention getAttention();
+    abstract void setBehavior(Behavior behavior);
+    public abstract Behavior getBehavior();
+//    Role getRole();
 }

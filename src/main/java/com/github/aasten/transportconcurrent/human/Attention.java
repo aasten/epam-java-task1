@@ -1,7 +1,12 @@
 package com.github.aasten.transportconcurrent.human;
 
-import com.github.aasten.transportconcurrent.events.BusStationEvent;
+import java.util.Iterator;
+
+import com.github.aasten.transportconcurrent.events.Event;
 
 public interface Attention {
-    void visit(BusStationEvent event);
+    void notifyAbout(Event event);
+    
+    Iterator<Event> eventIterator();
+    
 }

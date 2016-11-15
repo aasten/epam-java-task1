@@ -21,13 +21,13 @@ Human is an Interface which has:
 + setEnvironment(Environment) method;
 
 Attention is an Interface for be notified() about Events. (? Substitute Notification with Attention?)
-Attention uses currentBehaviour for delegating Event processing. (pattern name?)
+Attention uses currentBehavior for delegating Event processing. (pattern name?)
 
 Role is an Object which has:
 + attention interface
-# setCurrentBehaviour method
+# setCurrentBehavior method
 
-A PlaceDependentRole is a Role which changes behaviour according current place was set via currentPlace() method.
+A PlaceDependentRole is a Role which changes behavior according current place was set via currentPlace() method.
 
 A Passenger is a Human which has:
 -a PassengerRole;
@@ -40,19 +40,19 @@ AT_THE_ARRIVING_STATION;
 
 A Driver is a Human which has a DriverRole.
 
-PassengerRole is a PlaceDependentRole which may have as a currentBehaviour such Behaviours:
--AtTheDepartureStationPassengerBehaviour;
--InsideABusPassengerBehaviour;
--AtTheArrivingStationPassengerBehaviour;
+PassengerRole is a PlaceDependentRole which may have as a currentBehavior such Behaviors:
+-AtTheDepartureStationPassengerBehavior;
+-InsideABusPassengerBehavior;
+-AtTheArrivingStationPassengerBehavior;
 
-AtTheDepartureStationPassengerBehaviour is a Behaviour. 
-This behaviour reacts on BusArrivedToStationEvent. 
+AtTheDepartureStationPassengerBehavior is a Behavior. 
+This behavior reacts on BusArrivedToStationEvent. 
 
 A DriverRole is a Role which has a:
--DriverBehaviour.
+-DriverBehavior.
 
 
-InsideABus is a Behaviour which reacts onEvent in such a way:
+InsideABus is a Behavior which reacts onEvent in such a way:
 use 
 
 
@@ -74,7 +74,7 @@ CLOSED.
 
 The Door is to pass one Passenger while he uses it. Doors which can pass two passengers at the time are treated as two objects of Door.
 
-A Driver uses DoorManagement of each Door object in bus' immutable list to switch DoorState. This action is a DriverBehaviour reaction onEvent BusArrivedToStationEvent.
+A Driver uses DoorManagement of each Door object in bus' immutable list to switch DoorState. This action is a DriverBehavior reaction onEvent BusArrivedToStationEvent.
 
 
 A place of bus may be:

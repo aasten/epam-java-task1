@@ -1,17 +1,17 @@
 package com.github.aasten.transportconcurrent.system;
 
-import com.github.aasten.transportconcurrent.human.Passenger;
+import com.github.aasten.transportconcurrent.human.Behavior;
 
-public class PassengerRole implements Role<Passenger> {
+public class PassengerRole implements Role {
 
-    private Behaviour<Passenger> currentBehaviour;
+    private Behavior currentBehavior;
     
-    public void setBehaviour(Behaviour<Passenger> behaviour) {
-        currentBehaviour = behaviour;
+    public void setBehavior(Behavior behavior) {
+        currentBehavior = behavior;
     }
 
-    public Behaviour<Passenger> getCurrentBehaviour() {
-        return currentBehaviour;
+    public Behavior getCurrentBehavior() {
+        return currentBehavior;
     }
 
 }

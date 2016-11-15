@@ -46,7 +46,6 @@ public class Doors {
                 tryEnter(enterQueue.poll());
             }
         }
-        
     }
     
     /**
@@ -54,7 +53,7 @@ public class Doors {
      * @return result of entering
      * @retval false if doors are closed 
      */
-    public boolean tryEnter(Passenger passenger) {
+    boolean tryEnter(Passenger passenger) {
         synchronized(this) {
             if(opened) {
                 return bus.enter(passenger);
@@ -62,7 +61,7 @@ public class Doors {
             return false;
         }
     }
-    public void exit(Passenger passenger) {
+    void exit(Passenger passenger) {
         synchronized(this) {
             if(opened) {
                 bus.exit(passenger);
@@ -81,12 +80,18 @@ public class Doors {
             exitQueue.add(passenger);
         }
     }
-    public boolean isExitQueueEmpty() {
+    
+    public int enterQueueLength() {
         synchronized(enterQueue) {
-            return enterQueue.size() == 0;
-        }
+            return enterQueue.size();
+        } 
     }
     
+    public int exitQueueLength() {
+        synchronized(exitQueue) {
+            return exitQueue.size();
+        } 
+    }
     
     
 }

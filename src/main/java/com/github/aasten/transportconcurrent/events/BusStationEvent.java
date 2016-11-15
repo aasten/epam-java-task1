@@ -1,5 +1,6 @@
 package com.github.aasten.transportconcurrent.events;
 
+import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
@@ -7,9 +8,9 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
 
     public enum EventType {
         BUS_ARRIVED,
-        DOORS_OPENED,
+//        DOORS_OPENED,
         BUS_FULL,
-        DOORS_CLOSED,
+//        DOORS_CLOSED,
         BUS_DEPARTURED,
     }
     
@@ -32,5 +33,9 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
     public Bus getBus() { return bus; }
     
     public EventType getType() { return type; }
+    
+    public void affectBehavior(Behavior behavior) { 
+        behavior.behaveAccording(this);
+    }
 
 }

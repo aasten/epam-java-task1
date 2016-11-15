@@ -1,6 +1,7 @@
 package com.github.aasten.transportconcurrent.objects;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.github.aasten.transportconcurrent.human.Attention;
@@ -10,10 +11,24 @@ public class Bus implements Environment {
 
     private List<Attention> notifiable;
     private final int CAPACITY;
+    private final List<Doors> doors;
     
-    public Bus(int capacity) {
+    public Bus(int capacity, int doorsCount) {
         this.CAPACITY = capacity;
         notifiable = new ArrayList<Attention>(capacity);
+        if(doorsCount < 1) {
+            // TODO log this
+            doorsCount = 1;
+        }
+        doors = Collections.unmodifiableList(createDoorsList(doorsCount, this));
+    }
+    
+    private static List<Doors> createDoorsList(int doorsCount, Bus bus) {
+        List<Doors> list = new ArrayList<Doors>(doorsCount);
+        for(int i = 0; i < doorsCount; ++i) {
+            list.add(new Doors(bus));
+        }
+        return list;
     }
     
     public boolean isFull() {
@@ -22,7 +37,7 @@ public class Bus implements Environment {
         }
     }
     
-    public boolean enter(Passenger passenger) {
+    boolean enter(Passenger passenger) {
         synchronized(notifiable) {
             if(notifiable.size() < CAPACITY) {
                 notifiable.add(passenger.getAttention());
@@ -32,10 +47,14 @@ public class Bus implements Environment {
         }
     }
     
-    public void exit(Passenger passenger) {
+    void exit(Passenger passenger) {
         synchronized(notifiable) {
             notifiable.remove(passenger.getAttention());
         }
+    }
+    
+    public List<Doors> getDoors() {
+        return doors;
     }
 
     public void subscribeToEvents(Attention attention) {

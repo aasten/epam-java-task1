@@ -1,5 +1,6 @@
 package com.github.aasten.transportconcurrent.events;
 
+import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
@@ -43,4 +44,8 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
     
     public EventType getType() { return type; }
 
+    public void affectBehavior(Behavior behavior) { 
+        behavior.behaveAccording(this);
+    }
+    
 }

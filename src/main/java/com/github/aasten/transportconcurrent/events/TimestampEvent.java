@@ -7,5 +7,5 @@ public abstract class TimestampEvent implements Event {
     public TimestampEvent() {
         timestamp = new Date();
     }
-    public Date getTimestamp() { return timestamp; }
+    public Date getTimestamp() { return timestamp; }    
 }
