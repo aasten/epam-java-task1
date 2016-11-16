@@ -35,10 +35,10 @@ public class BasicEventProcessing implements EventEnvironment {
     public void notifyAbout(Event event) {
         synchronized(eventQueue) {
             eventQueue.add(event);
+            // actually, notifyOne might be used for the one-threaded launchInfinitely() call
+            // but keeping to be not dependent on this single-threading processing 
+            eventQueue.notifyAll();
         }
-        // actually, notifyOne might be used for the one-threaded launchInfinitely() call
-        // but keeping to be not dependent on this single-threading processing 
-        eventQueue.notifyAll(); 
     }
 
     @Override

@@ -48,15 +48,25 @@ public class TransportSystem {
         // busThread
         List<Bus> buses = new ArrayList<>();
         buses.add(new Bus(10,1,towardsBackwardsCyclicRoute,10,5));
-        List<Runnable> busProcesses = new ArrayList<>();
+        List<Runnable> busEventProcessings = new ArrayList<>();
         for(final Bus bus : buses) {
-            busProcesses.add(new Runnable() {
+            busEventProcessings.add(new Runnable() {
                 public void run() {
                     bus.launchInfinitely();
                 }
             });
         }
-        addRunnablesToNewDaemonThreads(threads, busProcesses);
+        addRunnablesToNewDaemonThreads(threads, busEventProcessings);
+        
+        List<Runnable> busRouteWalkings = new ArrayList<>();
+        for(final Bus bus : buses) {
+            busRouteWalkings.add(new Runnable() {
+                public void run() {
+                    bus.walkingTheRoute();
+                }
+            });
+        }
+        addRunnablesToNewDaemonThreads(threads, busRouteWalkings);
         
         // doorsThread
         List<Runnable> doorsProcesses = new ArrayList<>();

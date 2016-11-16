@@ -10,8 +10,20 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 // TODO get rid of synchronized() overhead
 public class Doors {
     
+    private static class DoorState {
+        private boolean isOpen = false;
+        DoorState(boolean isOpen) {
+            this.isOpen = isOpen;
+        }
+        void setIsOpen(boolean newState) {
+            isOpen = newState;
+        }
+        boolean isOpen() { return isOpen; }
+    }
+    
     private Bus bus;
-    private Boolean opened = false;
+//    private Boolean doorIsOpen = new Boolean(false);
+    private final DoorState doorState = new DoorState(false);
     private Queue<Passenger> enterQueue = new ArrayDeque<Passenger>();
     private Queue<Passenger> exitQueue = new ArrayDeque<Passenger>();
     
@@ -19,16 +31,16 @@ public class Doors {
         this.bus = bus;
     }
     
-    void openDoor() {
-        synchronized(opened) {
-            opened = true;
-            opened.notifyAll();
+    void open() {
+        synchronized(doorState) {
+            doorState.setIsOpen(true);
+            doorState.notifyAll();
         }
     }
     
-    void closeDoor() {
-        synchronized(opened) {
-            opened = false;
+    void close() {
+        synchronized(doorState) {
+            doorState.setIsOpen(false);
             synchronized(exitQueue) {
                 exitQueue.clear();
             }
@@ -41,9 +53,10 @@ public class Doors {
     public void process() {
         while(true) {
             try {
-                synchronized(opened) {
-                    if(false == opened) {
-                        opened.wait(); // for open
+                synchronized(doorState) {
+                    if(false == doorState.isOpen() ||
+                            (enterQueueLength() < 1 && exitQueueLength() < 1)) {
+                        doorState.wait(); // for open
                     }
                 }
             } catch (InterruptedException e) {
@@ -51,12 +64,12 @@ public class Doors {
                 LoggerFactory.getLogger(getClass()).warn(e.getMessage());
             } 
             synchronized(exitQueue) {
-                while(!exitQueue.isEmpty() && opened) {
+                while(!exitQueue.isEmpty() && doorState.isOpen()) {
                     exit(exitQueue.poll());
                 }
             }
             synchronized(enterQueue) {
-                while((!enterQueue.isEmpty() || !bus.isFull())  && opened) {
+                while((!enterQueue.isEmpty() || !bus.isFull())  && doorState.isOpen()) {
                     tryEnter(enterQueue.poll());
                 }
             }
@@ -69,15 +82,15 @@ public class Doors {
      * @retval false if doors are closed 
      */
     void tryEnter(Passenger passenger) {
-        synchronized(opened) {
-            if(opened) {
+        synchronized(doorState) {
+            if(doorState.isOpen()) {
                 bus.enter(passenger);
             }
         }
     }
     void exit(Passenger passenger) {
-        synchronized(opened) {
-            if(opened) {
+        synchronized(doorState) {
+            if(doorState.isOpen()) {
                 bus.exit(passenger);
             }
             // else TODO assert, runtime exception, etc 

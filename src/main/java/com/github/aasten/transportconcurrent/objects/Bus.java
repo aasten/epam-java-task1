@@ -35,6 +35,7 @@ public class Bus implements EventEnvironment {
             doorsCount = 1;
         }
         doors = Collections.unmodifiableList(createDoorsList(doorsCount, this));
+        this.route = route;
         this.averageSpeedMeterPerSec = averSpeedMeterPerSec;
         initialDelay = atFirstStationAfterSeconds;
     }
@@ -62,6 +63,9 @@ public class Bus implements EventEnvironment {
                 notifyAbout(new PassengerBusStationEvent(
                             passenger, this, currentStation, 
                             EventType.PASSENGER_ENTERED_BUS));
+                if(isAllDoorsQueuesEmpty()) {
+                    boardingFinished();
+                }
                 return true;
             } else {
                 boardingFinished();
@@ -73,13 +77,24 @@ public class Bus implements EventEnvironment {
     
     private void openAllDoors() {
         for(Doors doors : doors) {
-            doors.openDoor();
+            doors.open();
         }
     }
     private void closeAllDoors() {
         for(Doors doors : doors) {
-            doors.closeDoor();
+            doors.close();
         }
+    }
+    
+    // TODO optimize this by using events from doors instead of this method?
+    private boolean isAllDoorsQueuesEmpty() {
+        boolean thereIsSomebody = false; // consider empty apriori 
+        for(Doors d : doors) {
+            if(d.enterQueueLength() > 0 || d.exitQueueLength() > 0) {
+                thereIsSomebody |= true;
+            }
+        }
+        return !thereIsSomebody;
     }
     
     private void boardingFinished() {
@@ -88,7 +103,9 @@ public class Bus implements EventEnvironment {
                 BusStationEvent.EventType.BUS_DEPARTURED);
         currentStation.notifyAbout(departure);
         this.notifyAbout(departure);
-        notifyAll(); // to continue walking the route
+        synchronized(this) {
+            notifyAll(); // to continue walking the route
+        }
     }
     
     void exit(Passenger passenger) {
@@ -133,7 +150,9 @@ public class Bus implements EventEnvironment {
                 Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
                 this.notifyAbout(arriving);
                 currentStation.notifyAbout(arriving);
-                wait(); // for all passengers entered
+                synchronized(this) {
+                    wait(); // for all passengers entered
+                }
                 Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
                 this.notifyAbout(departure);
                 currentStation.notifyAbout(departure);
