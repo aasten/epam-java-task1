@@ -4,6 +4,8 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
 
+import org.slf4j.LoggerFactory;
+
 import com.github.aasten.transportconcurrent.events.Event;
 
 public class HumanAttention implements Attention {
@@ -22,8 +24,36 @@ public class HumanAttention implements Attention {
     }
 
     public Iterator<Event> eventIterator() {
-        // TODO Auto-generated method stub
-        return null;
+        return new Iterator<Event>(){
+
+            private Iterator<Event> unsafe = eventQueue.iterator();
+            
+            public boolean hasNext() {
+                synchronized(eventQueue) {
+                    return unsafe.hasNext();
+                }
+            }
+
+            public Event next() {
+                synchronized(eventQueue) {
+                    if(false == unsafe.hasNext()) {
+                        try {
+                            eventQueue.wait();
+                        } catch (InterruptedException e) {
+                            LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+                        }
+                    }
+                    return unsafe.next();
+                }
+            }
+
+            public void remove() {
+                synchronized(eventQueue) {
+                    unsafe.remove();
+                }
+            }
+            
+        };
     }
 
 }
