@@ -10,6 +10,8 @@ import java.util.List;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.human.Passenger;
+import com.github.aasten.transportconcurrent.objects.Bus;
+import com.github.aasten.transportconcurrent.objects.Doors;
 import com.github.aasten.transportconcurrent.objects.Route;
 import com.github.aasten.transportconcurrent.objects.Station;
 import com.github.aasten.transportconcurrent.objects.TowardsBackwardsCyclicRoute;
@@ -20,6 +22,19 @@ public class TransportSystem {
             LinkedHashMap<Station,HashMap<Station,Double>> routeMap,
             Station from, Station to, double distance) {
         routeMap.get(from).put(to,distance);
+    }
+    
+    private static void addRunnablesToNewThreads(List<Thread> threads, List<Runnable> runnables) {
+        for(Runnable r : runnables) {
+            threads.add(new Thread(r));
+        }
+    }
+    private static void addRunnablesToNewDaemonThreads(List<Thread> threads, List<Runnable> runnables) {
+        for(Runnable r : runnables) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            threads.add(t);
+        }
     }
     
     public static void execute(File propetyFile) throws IllegalArgumentException {
@@ -36,9 +51,9 @@ public class TransportSystem {
         setDistanceFromTo(towardsRouteDirection, stationList.get(0), stationList.get(1), 100);
         
         
-        Route towardsBackwardsCyclicRoute = new TowardsBackwardsCyclicRoute(towardsRouteDirection);
+        final Route towardsBackwardsCyclicRoute = new TowardsBackwardsCyclicRoute(towardsRouteDirection);
         
-        List<Runnable> passengerProcesses = new ArrayList<Runnable>(1);
+        List<Runnable> passengerProcesses = new ArrayList<Runnable>();
         passengerProcesses.add(new Runnable() {
             public void run() {
                 Passenger passenger = new Passenger(stationList.get(0),stationList.get(1));
@@ -47,9 +62,35 @@ public class TransportSystem {
         });
         // TODO ThreadGroup?
         List<Thread> threads = new ArrayList<Thread>();
-        for(Runnable r : passengerProcesses) {
-            threads.add(new Thread(r));
+        addRunnablesToNewThreads(threads, passengerProcesses);
+        
+        // busThread
+        List<Bus> buses = new ArrayList<>();
+        buses.add(new Bus(10,1,towardsBackwardsCyclicRoute,10,5));
+        List<Runnable> busProcesses = new ArrayList<>();
+        for(final Bus bus : buses) {
+            busProcesses.add(new Runnable() {
+                public void run() {
+                    bus.launchInfinitely();
+                }
+            });
         }
+        addRunnablesToNewDaemonThreads(threads, busProcesses);
+        
+        // doorsThread
+        List<Runnable> doorsProcesses = new ArrayList<>();
+        for(Bus bus : buses) {
+            for(final Doors d : bus.getDoors()) {
+                doorsProcesses.add(new Runnable() {
+                    @Override
+                    public void run() {
+                        d.process();
+                    }
+                });
+            }
+        }
+        addRunnablesToNewDaemonThreads(threads, doorsProcesses);
+        
         for(Thread t : threads) {
             t.start();
         }

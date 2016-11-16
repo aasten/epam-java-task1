@@ -20,10 +20,11 @@ import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 // TODO seems to have to many tasks
 public class Bus implements EventEnvironment {
 
-    private List<Attention> notifiable;
+//    private List<Attention> notifiable;
     private final int CAPACITY;
+    private Integer currentPlacesTaken = 0;
     private final List<Doors> doors;
-    private final Queue<Event> eventQueue = new ArrayDeque<Event>();
+//    private final Queue<Event> eventQueue = new ArrayDeque<Event>();
     private Station currentStation;
     private Route route;
     private double averageSpeedMeterPerSec;
@@ -32,7 +33,7 @@ public class Bus implements EventEnvironment {
     public Bus(int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
         this.CAPACITY = capacity;
-        notifiable = new ArrayList<Attention>(capacity);
+//        notifiable = new ArrayList<Attention>(capacity);
         if(doorsCount < 1) {
             // TODO log this
             doorsCount = 1;
@@ -51,14 +52,15 @@ public class Bus implements EventEnvironment {
     }
     
     public boolean isFull() {
-        synchronized(notifiable) {
-            return notifiable.size() < CAPACITY;
+        synchronized(currentPlacesTaken) {
+            return currentPlacesTaken < CAPACITY;
         }
     }
     
     boolean enter(Passenger passenger) {
-        synchronized(notifiable) {
-            if(notifiable.size() < CAPACITY) {
+        synchronized(currentPlacesTaken) {
+            if(!isFull()) {
+                currentPlacesTaken++;
                 subscribeToEvents(passenger.getAttention());
                 notifyAbout(new PassengerBusStationEvent(
                             passenger, this, currentStation, 
@@ -93,7 +95,10 @@ public class Bus implements EventEnvironment {
     }
     
     void exit(Passenger passenger) {
-        synchronized(notifiable) {
+        synchronized(currentPlacesTaken) {
+            if(currentPlacesTaken > 0 ) {
+                currentPlacesTaken--;
+            }
             unSubscribe(passenger.getAttention());
         }
     }
