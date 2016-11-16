@@ -13,9 +13,10 @@ public class Passenger extends Human implements HavingTarget {
     private Station destination;
     private boolean targetIsAchieved = false;
     
-    public Passenger(Station destination) {
+    public Passenger(Station initial, Station destination) {
         this.destination = destination;
         currentBehavior = new PassengerBehaviorAtStation(this, this.destination);
+        initial.subscribeToEvents(attention);
     }
     
     public Attention getAttention() {
@@ -49,11 +50,11 @@ public class Passenger extends Human implements HavingTarget {
         targetIsAchieved = true;
     }
     
-    Station getDestination() {
+    public Station getDestination() {
         return destination;
     }
     
-    void targetAchieving() {
+    public void targetAchieving() {
         Iterator<Event> eventIterator = attention.eventIterator();
         // TODO check need of synchronization
         while(false == targetIsAchieved) {

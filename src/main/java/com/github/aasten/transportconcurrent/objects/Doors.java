@@ -3,9 +3,11 @@ package com.github.aasten.transportconcurrent.objects;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+import org.slf4j.LoggerFactory;
+
 import com.github.aasten.transportconcurrent.human.Passenger;
 
-// TODO implement EventEnvironment (bus will subscribe to move next station)
+// TODO get rid of synchronized() overhead
 public class Doors {
     
     private Bus bus;
@@ -27,24 +29,32 @@ public class Doors {
     void closeDoor() {
         synchronized(this) {
             opened = false;
-            try {
-                wait();
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+            synchronized(exitQueue) {
+                exitQueue.clear();
+            }
+            synchronized(enterQueue) {
+                enterQueue.clear();
             }
         }
     }
     
     public void process() {
-        synchronized(exitQueue) {
-            while(!exitQueue.isEmpty()) {
-                exit(exitQueue.poll());
+        while(true) {
+            try {
+                wait(); // for open
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+            } 
+            synchronized(exitQueue) {
+                while(!exitQueue.isEmpty() && opened) {
+                    exit(exitQueue.poll());
+                }
             }
-        }
-        synchronized(enterQueue) {
-            while(!enterQueue.isEmpty() || !bus.isFull()) {
-                tryEnter(enterQueue.poll());
+            synchronized(enterQueue) {
+                while((!enterQueue.isEmpty() || !bus.isFull())  && opened) {
+                    tryEnter(enterQueue.poll());
+                }
             }
         }
     }
@@ -54,12 +64,11 @@ public class Doors {
      * @return result of entering
      * @retval false if doors are closed 
      */
-    boolean tryEnter(Passenger passenger) {
+    void tryEnter(Passenger passenger) {
         synchronized(this) {
             if(opened) {
-                return bus.enter(passenger);
+                bus.enter(passenger);
             }
-            return false;
         }
     }
     void exit(Passenger passenger) {

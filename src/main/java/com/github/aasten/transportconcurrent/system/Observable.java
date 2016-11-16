@@ -4,6 +4,7 @@ import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.EventPool;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 
+@Deprecated
 public class Observable implements EventPool {
 
     public void visit(PassengerBusStationEvent event) {

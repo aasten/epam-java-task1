@@ -65,7 +65,7 @@ public class PassengerBehaviorAtStation extends IgnoringBehavior {
             // directly to the passenger?
             passenger.setBehavior(Rules.reactOnEventForPassenger(event, passenger).getInsideBus());
             break;
-        case PASSENGER_REMAINS_ON_STATION:
+        case PASSENGER_AT_STATION:
             // no behavior changing
             break;
         }

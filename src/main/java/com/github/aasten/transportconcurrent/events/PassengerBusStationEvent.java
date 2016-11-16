@@ -9,8 +9,8 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
 
     public enum EventType {
         PASSENGER_ENTERED_BUS,
-        PASSENGER_REMAINS_ON_STATION,
-        PASSENGER_EXITED_BUS
+        PASSENGER_AT_STATION,
+        PASSENGER_EXITED_BUS,
     }
     
     private final Passenger passenger;
