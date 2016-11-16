@@ -7,8 +7,8 @@ import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Doors;
-import com.github.aasten.transportconcurrent.system.Rules;
 
+//TODO replace inheritance with composition?
 public class PassengerBehaviorInsideBus extends IgnoringBehavior {
     
     private Bus bus;

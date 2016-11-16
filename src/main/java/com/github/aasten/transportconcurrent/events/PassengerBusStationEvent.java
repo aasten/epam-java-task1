@@ -28,18 +28,13 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
         this.type = type;
     }
     
-//    @Override
-    public void accept(EventPool visitor) {
-        visitor.visit(this);
-    }
-
-//    @Override
+    @Override
     public Passenger getPassenger() { return passenger; }
 
-//    @Override
+    @Override
     public Bus getBus() { return bus; }
 
-//    @Override
+    @Override
     public Station getStation() { return station; }
     
     public EventType getType() { return type; }

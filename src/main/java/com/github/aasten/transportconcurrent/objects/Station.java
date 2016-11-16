@@ -6,6 +6,7 @@ import com.github.aasten.transportconcurrent.human.Attention;
 public class Station implements EventEnvironment {
     
     private final String name; 
+    private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
     
     public Station(String name) {
         this.name = name;
@@ -16,23 +17,19 @@ public class Station implements EventEnvironment {
     }
 
     public void subscribeToEvents(Attention attention) {
-        // TODO Auto-generated method stub
-        
+        delegateEventProcessing.subscribeToEvents(attention);
     }
 
     public void unSubscribe(Attention attention) {
-        // TODO Auto-generated method stub
-        
+        delegateEventProcessing.unSubscribe(attention);
     }
 
     public void notifyAbout(Event event) {
-        // TODO Auto-generated method stub
-        
+        delegateEventProcessing.notifyAbout(event);
     }
 
     public void launchInfinitely() {
-        // TODO Auto-generated method stub
-        
+        delegateEventProcessing.launchInfinitely();
     }
 
     // equals for stations with same name

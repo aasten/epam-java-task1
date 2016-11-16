@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
 
 public class TowardsBackwardsCyclicRoute implements Route {
 
-    private ArrayList<Station> stationListTowards;
+    private ArrayList<Station> stationListTowards = new ArrayList<>();
     private LinkedHashMap<Station, HashMap<Station, Double>> routeMap;
     
     

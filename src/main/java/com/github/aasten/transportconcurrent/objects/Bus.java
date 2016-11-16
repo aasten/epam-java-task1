@@ -1,11 +1,9 @@
 package com.github.aasten.transportconcurrent.objects;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Queue;
 
 import org.slf4j.LoggerFactory;
 
@@ -20,20 +18,18 @@ import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 // TODO seems to have to many tasks
 public class Bus implements EventEnvironment {
 
-//    private List<Attention> notifiable;
     private final int CAPACITY;
     private Integer currentPlacesTaken = 0;
     private final List<Doors> doors;
-//    private final Queue<Event> eventQueue = new ArrayDeque<Event>();
     private Station currentStation;
     private Route route;
     private double averageSpeedMeterPerSec;
     private double initialDelay;
+    private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
     
     public Bus(int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
         this.CAPACITY = capacity;
-//        notifiable = new ArrayList<Attention>(capacity);
         if(doorsCount < 1) {
             // TODO log this
             doorsCount = 1;
@@ -62,6 +58,7 @@ public class Bus implements EventEnvironment {
             if(!isFull()) {
                 currentPlacesTaken++;
                 subscribeToEvents(passenger.getAttention());
+                // notify passenger through own event environment
                 notifyAbout(new PassengerBusStationEvent(
                             passenger, this, currentStation, 
                             EventType.PASSENGER_ENTERED_BUS));
@@ -108,49 +105,21 @@ public class Bus implements EventEnvironment {
     }
 
     public void subscribeToEvents(Attention attention) {
-        synchronized(notifiable) {
-            notifiable.add(attention);
-        }
+        delegateEventProcessing.subscribeToEvents(attention);
     }
 
     public void unSubscribe(Attention attention) {
-        synchronized(notifiable) {
-            notifiable.remove(attention);
-        }
+        delegateEventProcessing.unSubscribe(attention);
     }
 
     public void notifyAbout(Event event) {
-        synchronized(eventQueue) {
-            eventQueue.add(event);
-        }
-        // actually, notifyOne might be used for the one-threaded launchInfinitely() call
-        // but keeping to be not dependent on this single-threading processing 
-        eventQueue.notifyAll(); 
+        delegateEventProcessing.notifyAbout(event); 
     }
 
     public void launchInfinitely() {
-        while(true) {
-            Event currentEvent = takeEvent();
-            for(Attention attention : notifiable) {
-                attention.notifyAbout(currentEvent);
-            }
-        }
+        delegateEventProcessing.launchInfinitely();
     }
     
-    private Event takeEvent() {
-        synchronized (eventQueue) {
-            if(eventQueue.isEmpty()) {
-                try {
-                    eventQueue.wait();
-                } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
-                }
-            }
-            // TODO optimizing extraction of subset of actually handled events 
-            // may be here
-            return eventQueue.poll();
-        }
-    }
     
     // main function
     public void walkingTheRoute() {

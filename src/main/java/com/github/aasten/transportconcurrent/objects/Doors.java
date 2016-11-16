@@ -11,7 +11,7 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 public class Doors {
     
     private Bus bus;
-    private boolean opened;
+    private Boolean opened = false;
     private Queue<Passenger> enterQueue = new ArrayDeque<Passenger>();
     private Queue<Passenger> exitQueue = new ArrayDeque<Passenger>();
     
@@ -20,14 +20,14 @@ public class Doors {
     }
     
     void openDoor() {
-        synchronized(this) {
+        synchronized(opened) {
             opened = true;
-            notifyAll();
+            opened.notifyAll();
         }
     }
     
     void closeDoor() {
-        synchronized(this) {
+        synchronized(opened) {
             opened = false;
             synchronized(exitQueue) {
                 exitQueue.clear();
@@ -41,7 +41,11 @@ public class Doors {
     public void process() {
         while(true) {
             try {
-                wait(); // for open
+                synchronized(opened) {
+                    if(false == opened) {
+                        opened.wait(); // for open
+                    }
+                }
             } catch (InterruptedException e) {
                 // TODO Auto-generated catch block
                 LoggerFactory.getLogger(getClass()).warn(e.getMessage());
@@ -65,14 +69,14 @@ public class Doors {
      * @retval false if doors are closed 
      */
     void tryEnter(Passenger passenger) {
-        synchronized(this) {
+        synchronized(opened) {
             if(opened) {
                 bus.enter(passenger);
             }
         }
     }
     void exit(Passenger passenger) {
-        synchronized(this) {
+        synchronized(opened) {
             if(opened) {
                 bus.exit(passenger);
             }

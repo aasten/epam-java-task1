@@ -9,6 +9,7 @@ import com.github.aasten.transportconcurrent.objects.Doors;
 import com.github.aasten.transportconcurrent.objects.Station;
 import com.github.aasten.transportconcurrent.system.Rules;
 
+// TODO replace inheritance with composition?
 public class PassengerBehaviorAtStation extends IgnoringBehavior {
     
     private Passenger passenger;

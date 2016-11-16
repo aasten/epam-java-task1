@@ -18,25 +18,6 @@ import com.github.aasten.transportconcurrent.objects.TowardsBackwardsCyclicRoute
 
 public class TransportSystem {
     
-    private static void setDistanceFromTo(
-            LinkedHashMap<Station,HashMap<Station,Double>> routeMap,
-            Station from, Station to, double distance) {
-        routeMap.get(from).put(to,distance);
-    }
-    
-    private static void addRunnablesToNewThreads(List<Thread> threads, List<Runnable> runnables) {
-        for(Runnable r : runnables) {
-            threads.add(new Thread(r));
-        }
-    }
-    private static void addRunnablesToNewDaemonThreads(List<Thread> threads, List<Runnable> runnables) {
-        for(Runnable r : runnables) {
-            Thread t = new Thread(r);
-            t.setDaemon(true);
-            threads.add(t);
-        }
-    }
-    
     public static void execute(File propetyFile) throws IllegalArgumentException {
         // TODO read property file
         // creating in threads: passengers, buses, stations 
@@ -106,5 +87,25 @@ public class TransportSystem {
         
         LoggerFactory.getLogger(TransportSystem.class).trace("Finished execution");
         
+    }
+    
+    
+    private static void setDistanceFromTo(
+            LinkedHashMap<Station,HashMap<Station,Double>> routeMap,
+            Station from, Station to, double distance) {
+        routeMap.get(from).put(to,distance);
+    }
+    
+    private static void addRunnablesToNewThreads(List<Thread> threads, List<Runnable> runnables) {
+        for(Runnable r : runnables) {
+            threads.add(new Thread(r));
+        }
+    }
+    private static void addRunnablesToNewDaemonThreads(List<Thread> threads, List<Runnable> runnables) {
+        for(Runnable r : runnables) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            threads.add(t);
+        }
     }
 }

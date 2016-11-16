@@ -23,10 +23,6 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
         this.station = station;
         this.type = type;
     }
-    
-    public void accept(EventPool visitor) {
-        visitor.visit(this);
-    }
 
     public Station getStation() { return station; }
 

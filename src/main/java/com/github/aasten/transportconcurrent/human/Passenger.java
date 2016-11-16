@@ -8,7 +8,7 @@ import com.github.aasten.transportconcurrent.system.HavingTarget;
 
 public class Passenger extends Human implements HavingTarget {
 
-    private HumanAttention attention = new HumanAttention(this);
+    private QueuedAttention attention = new QueuedAttention();
     private Behavior currentBehavior;
     private Station destination;
     private boolean targetIsAchieved = false;

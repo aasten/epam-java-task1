@@ -8,14 +8,12 @@ import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
 
-public class HumanAttention implements Attention {
+public class QueuedAttention implements Attention {
     
-    private Human human;
     private int EVENT_QUEUE_MAX_SIZE = 1000;
     private Queue<Event> eventQueue = new ArrayDeque<Event>(EVENT_QUEUE_MAX_SIZE);
 
-    public HumanAttention(Human human) {
-        this.human = human;
+    public QueuedAttention() {
     }
     
     public void notifyAbout(Event event) {
