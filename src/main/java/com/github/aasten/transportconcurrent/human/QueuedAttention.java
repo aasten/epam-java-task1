@@ -43,10 +43,9 @@ public class QueuedAttention implements Attention, Iterator<Event> {
         }
     }
 
-
-//            
-//        };
-
-//    }
+    @Override
+    public void remove() {
+        next(); // not interested in return value
+    }
 
 }

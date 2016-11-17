@@ -19,13 +19,17 @@ import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 public class Bus implements EventEnvironment {
 
     private final int CAPACITY;
-    private Integer currentPlacesTaken = 0;
+    private int currentPlacesTaken = 0;
     private final List<Doors> doors;
     private Station currentStation;
     private Route route;
-    private double averageSpeedMeterPerSec;
+    private volatile double averageSpeedMeterPerSec;
     private double initialDelay;
     private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
+    // waiting for queues populated after arriving before entering/exiting
+    private final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
+    private final Object passengerEntering = new Object();
+    private final Object allPassengersPassed = new Object();
     
     public Bus(int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
@@ -40,6 +44,10 @@ public class Bus implements EventEnvironment {
         initialDelay = atFirstStationAfterSeconds;
     }
     
+    public void setAverageSpeed(double metersPerSeconds) {
+        this.averageSpeedMeterPerSec = metersPerSeconds;
+    }
+    
     private static List<Doors> createDoorsList(int doorsCount, Bus bus) {
         List<Doors> list = new ArrayList<Doors>(doorsCount);
         for(int i = 0; i < doorsCount; ++i) {
@@ -49,13 +57,13 @@ public class Bus implements EventEnvironment {
     }
     
     public boolean isFull() {
-        synchronized(currentPlacesTaken) {
-            return currentPlacesTaken < CAPACITY;
+        synchronized(passengerEntering) {
+            return currentPlacesTaken >= CAPACITY;
         }
     }
     
     boolean enter(Passenger passenger) {
-        synchronized(currentPlacesTaken) {
+        synchronized(passengerEntering) {
             if(!isFull()) {
                 currentPlacesTaken++;
                 subscribeToEvents(passenger.getAttention());
@@ -63,6 +71,7 @@ public class Bus implements EventEnvironment {
                 notifyAbout(new PassengerBusStationEvent(
                             passenger, this, currentStation, 
                             EventType.PASSENGER_ENTERED_BUS));
+                // TODO inefficient, replace with some event?
                 if(isAllDoorsQueuesEmpty()) {
                     boardingFinished();
                 }
@@ -71,7 +80,6 @@ public class Bus implements EventEnvironment {
                 boardingFinished();
                 return false;
             }
-            
         }
     }
     
@@ -99,21 +107,21 @@ public class Bus implements EventEnvironment {
     
     private void boardingFinished() {
         closeAllDoors();
-        Event departure = new BusStationEvent(this, currentStation, 
-                BusStationEvent.EventType.BUS_DEPARTURED);
-        currentStation.notifyAbout(departure);
-        this.notifyAbout(departure);
-        synchronized(this) {
-            notifyAll(); // to continue walking the route
+        synchronized(allPassengersPassed) {
+            allPassengersPassed.notifyAll(); // to continue walking the route
         }
     }
     
     void exit(Passenger passenger) {
-        synchronized(currentPlacesTaken) {
+        synchronized(passengerEntering) {
             if(currentPlacesTaken > 0 ) {
                 currentPlacesTaken--;
             }
             unSubscribe(passenger.getAttention());
+            // TODO inefficient, replace with some event? 
+            if(isAllDoorsQueuesEmpty()) {
+                boardingFinished();
+            }
         }
     }
     
@@ -141,26 +149,33 @@ public class Bus implements EventEnvironment {
     // main function
     public void walkingTheRoute() {
         Iterator<RouteElement> routeIterator = route.getFirst();
-        try {
-            Thread.sleep((long)(1000*initialDelay));
-            while(routeIterator.hasNext()) {
-                final RouteElement r = routeIterator.next();
-                currentStation = r.nextStation();
-                openAllDoors();
-                Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
-                this.notifyAbout(arriving);
-                currentStation.notifyAbout(arriving);
-                synchronized(this) {
-                    wait(); // for all passengers entered
-                }
-                Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
-                this.notifyAbout(departure);
-                currentStation.notifyAbout(departure);
-                Thread.sleep((long)(1000*r.distanceMeters()/averageSpeedMeterPerSec));
-            }
-        } catch (InterruptedException e) {
-            LoggerFactory.getLogger(getClass()).warn(e.getMessage());
-        } // for the entering process finished
+        if(routeIterator.hasNext()) {
+            try {
+                Thread.sleep((long)(1000*initialDelay));
+                do {
+                    final RouteElement r = routeIterator.next();
+                    Thread.sleep((long)(1000*r.distanceMeters()/averageSpeedMeterPerSec));
+                    currentStation = r.nextStation();
+                    // wait for free place for bus if busy
+                    currentStation.takeBusPlace();
+                    openAllDoors();
+                    Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
+                    this.notifyAbout(arriving);
+                    currentStation.notifyAbout(arriving);
+                    synchronized(allPassengersPassed) {
+                        // wait for passengers to fill queues for exit and enter
+                        Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
+                        allPassengersPassed.wait(); // for all passengers entered
+                    }
+                    Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
+                    this.notifyAbout(departure);
+                    currentStation.notifyAbout(departure);
+                    currentStation.releaseBusPlace();
+                } while(routeIterator.hasNext());
+            } catch (InterruptedException e) {
+                LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+            } // for the entering process finished
+        }
     }
     
 }

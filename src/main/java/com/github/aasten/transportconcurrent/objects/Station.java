@@ -1,5 +1,7 @@
 package com.github.aasten.transportconcurrent.objects;
 
+import org.slf4j.LoggerFactory;
+
 import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.human.Attention;
 
@@ -7,9 +9,21 @@ public class Station implements EventEnvironment {
     
     private final String name; 
     private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
+    private final int busesAtOnce;
+    private int busesCurrently = 0;
+    
+    public Station(String name, int busesAtOnce) {
+        this.name = name;
+        if(busesAtOnce < 1) {
+            LoggerFactory.getLogger(getClass()).warn(
+                    "Got buses-at-once value is {}. Used {} instead",busesAtOnce,1);
+            busesAtOnce = 1;
+        }
+        this.busesAtOnce = busesAtOnce;
+    }
     
     public Station(String name) {
-        this.name = name;
+        this(name,1);
     }
     
     public String name() {
@@ -41,5 +55,28 @@ public class Station implements EventEnvironment {
             }
         }
         return false;
+    }
+    
+    void takeBusPlace() {
+        synchronized(this) {
+            if(busesCurrently < busesAtOnce) {
+                busesCurrently++;
+            } else {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+                }
+            }
+        }
+    }
+    
+    void releaseBusPlace() {
+        synchronized(this) {
+            if(busesCurrently > 0) {
+                busesCurrently--;
+            }
+            notifyAll();
+        }
     }
 }

@@ -10,12 +10,13 @@ import com.github.aasten.transportconcurrent.objects.Station;
 import com.github.aasten.transportconcurrent.system.Rules;
 
 // TODO replace inheritance with composition?
-public class PassengerBehaviorAtStation extends IgnoringBehavior {
+public class PassengerBehaviorAtStation extends DefaultPassengerBehavior {
     
     private Passenger passenger;
     private Station station;
     
     public PassengerBehaviorAtStation(Passenger passenger, Station station) {
+        super(passenger);
         this.passenger = passenger;
         this.station = station;
         this.station.subscribeToEvents(passenger.getAttention());
@@ -36,7 +37,7 @@ public class PassengerBehaviorAtStation extends IgnoringBehavior {
                     } );
             // try enter
             doorsToEnter.enqueueEnter(passenger);
-            station.unSubscribe(passenger.getAttention());
+//            station.unSubscribe(passenger.getAttention());
             break;
         default:
             break;

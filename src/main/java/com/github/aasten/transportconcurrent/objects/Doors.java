@@ -21,8 +21,9 @@ public class Doors {
         boolean isOpen() { return isOpen; }
     }
     
+//    private final long WAIT_PASSENGER_AT_DOORS_MSEC = 1000;
+    
     private Bus bus;
-//    private Boolean doorIsOpen = new Boolean(false);
     private final DoorState doorState = new DoorState(false);
     private Queue<Passenger> enterQueue = new ArrayDeque<Passenger>();
     private Queue<Passenger> exitQueue = new ArrayDeque<Passenger>();
@@ -52,25 +53,43 @@ public class Doors {
     
     public void process() {
         while(true) {
-            try {
-                synchronized(doorState) {
-                    if(false == doorState.isOpen() ||
-                            (enterQueueLength() < 1 && exitQueueLength() < 1)) {
+            synchronized(doorState) {
+                // process all the queues that are filled for this moment
+                try {
+//                    if(false == doorState.isOpen()) {
                         doorState.wait(); // for open
+//                    }
+                    
+                 
+                    synchronized(exitQueue) {
+                        while(!exitQueue.isEmpty() /*&& doorState.isOpen()*/) {
+                            exit(exitQueue.poll());
+//                            if(exitQueue.isEmpty()) {
+//                             // wait for passenger if is not enqueued yet
+//                                exitQueue.wait(WAIT_PASSENGER_AT_DOORS_MSEC);
+//                            }
+                        }
                     }
-                }
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                LoggerFactory.getLogger(getClass()).warn(e.getMessage());
-            } 
-            synchronized(exitQueue) {
-                while(!exitQueue.isEmpty() && doorState.isOpen()) {
-                    exit(exitQueue.poll());
-                }
-            }
-            synchronized(enterQueue) {
-                while((!enterQueue.isEmpty() || !bus.isFull())  && doorState.isOpen()) {
-                    tryEnter(enterQueue.poll());
+                    synchronized(enterQueue) {
+                        while((!enterQueue.isEmpty() && !bus.isFull())  /*&& doorState.isOpen()*/) {
+                            tryEnter(enterQueue.remove());
+//                            if(enterQueue.isEmpty() && !bus.isFull()) {
+//                                // wait for passenger if is not enqueued yet
+//                                enterQueue.wait(WAIT_PASSENGER_AT_DOORS_MSEC);
+//                            }
+                        }
+                        if(!enterQueue.isEmpty()) {
+                            // bus is full
+                            enterQueue.clear();
+                        }
+                    }
+                    
+//                    synchronized(anyPassengerAtDoors) {
+//                        if()
+//                    }
+                    
+                } catch (InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
                 }
             }
         }
@@ -100,11 +119,13 @@ public class Doors {
     public void enqueueEnter(Passenger passenger) {
         synchronized(enterQueue) {
             enterQueue.add(passenger);
+//            enterQueue.notifyAll();
         }
     }
     public void enqueueExit(Passenger passenger) {
         synchronized(exitQueue) {
             exitQueue.add(passenger);
+//            exitQueue.notifyAll();
         }
     }
     
