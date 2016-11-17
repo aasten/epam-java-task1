@@ -3,15 +3,20 @@ package com.github.aasten.transportconcurrent.system;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
 
+import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.human.Passenger;
+import com.github.aasten.transportconcurrent.human.QueuedAttention;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Doors;
+import com.github.aasten.transportconcurrent.objects.EventEnvironment;
 import com.github.aasten.transportconcurrent.objects.Route;
 import com.github.aasten.transportconcurrent.objects.Station;
 import com.github.aasten.transportconcurrent.objects.TowardsBackwardsCyclicRoute;
@@ -34,25 +39,41 @@ public class TransportSystem {
         
         final Route towardsBackwardsCyclicRoute = new TowardsBackwardsCyclicRoute(towardsRouteDirection);
         
-        List<Runnable> passengerProcesses = new ArrayList<Runnable>();
+
+        // TODO ThreadGroup?
+        List<Thread> threads = new ArrayList<Thread>();
+
+        
+        List<Runnable> stationProcessings = new ArrayList<>();
+        // infinitely launch event processing on event environment
+        for(final EventEnvironment e : stationList) {
+            stationProcessings.add(new Runnable() {
+                @Override
+                public void run() {
+                    e.launchInfinitely();
+                }
+            });
+        }
+        addRunnablesToNewDaemonThreads(threads, stationProcessings);
+        
+        List<Runnable> passengerProcesses = new ArrayList<>();
         passengerProcesses.add(new Runnable() {
             public void run() {
                 Passenger passenger = new Passenger(stationList.get(0),stationList.get(1));
                 passenger.targetAchieving();
             }
         });
-        // TODO ThreadGroup?
-        List<Thread> threads = new ArrayList<Thread>();
         addRunnablesToNewThreads(threads, passengerProcesses);
         
         // busThread
         List<Bus> buses = new ArrayList<>();
         buses.add(new Bus(10,1,towardsBackwardsCyclicRoute,10,5));
         List<Runnable> busEventProcessings = new ArrayList<>();
-        for(final Bus bus : buses) {
+        // infinitely launch event processing on event environment
+        for(final EventEnvironment e : buses) {
             busEventProcessings.add(new Runnable() {
                 public void run() {
-                    bus.launchInfinitely();
+                    e.launchInfinitely();
                 }
             });
         }
@@ -67,6 +88,17 @@ public class TransportSystem {
             });
         }
         addRunnablesToNewDaemonThreads(threads, busRouteWalkings);
+        
+        QueuedAttention loggingAttention = new QueuedAttention();
+        for(final EventEnvironment e : buses) {
+            e.subscribeToEvents(loggingAttention);
+        }
+        for(final EventEnvironment e : stationList) {
+            e.subscribeToEvents(loggingAttention);
+        }
+        
+        Logging loggingProcess = new Logging(loggingAttention);
+        addRunnablesToNewDaemonThreads(threads, Collections.singletonList(loggingProcess));
         
         // doorsThread
         List<Runnable> doorsProcesses = new ArrayList<>();
@@ -106,16 +138,32 @@ public class TransportSystem {
         routeMap.get(from).put(to,distance);
     }
     
-    private static void addRunnablesToNewThreads(List<Thread> threads, List<Runnable> runnables) {
+    private static void addRunnablesToNewThreads(List<Thread> threads, List<? extends Runnable> runnables) {
         for(Runnable r : runnables) {
             threads.add(new Thread(r));
         }
     }
-    private static void addRunnablesToNewDaemonThreads(List<Thread> threads, List<Runnable> runnables) {
+    private static void addRunnablesToNewDaemonThreads(List<Thread> threads, List<? extends Runnable> runnables) {
         for(Runnable r : runnables) {
             Thread t = new Thread(r);
             t.setDaemon(true);
             threads.add(t);
         }
+    }
+    
+    static class Logging implements Runnable {
+        private Iterator<Event> iterator;
+        
+        public Logging(Iterator<Event> iterator) {
+            this.iterator = iterator;
+        }
+
+        @Override
+        public void run() {
+            while(true) {
+                LoggerFactory.getLogger(TransportSystem.class).trace(iterator.next().toString());
+            }
+        }
+        
     }
 }

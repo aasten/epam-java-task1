@@ -5,7 +5,7 @@ import java.util.Iterator;
 import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.human.Attention;
 
-public class LoggerAttention implements Attention {
+public class LoggerAttention implements Attention, Iterator<Event> {
 
     @Override
     public void notifyAbout(Event event) {
@@ -14,7 +14,13 @@ public class LoggerAttention implements Attention {
     }
 
     @Override
-    public Iterator<Event> eventIterator() {
+    public boolean hasNext() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public Event next() {
         // TODO Auto-generated method stub
         return null;
     }

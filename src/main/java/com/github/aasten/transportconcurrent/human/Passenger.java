@@ -1,8 +1,5 @@
 package com.github.aasten.transportconcurrent.human;
 
-import java.util.Iterator;
-
-import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.objects.Station;
 import com.github.aasten.transportconcurrent.system.HavingTarget;
 
@@ -55,10 +52,8 @@ public class Passenger extends Human implements HavingTarget {
     }
     
     public void targetAchieving() {
-        Iterator<Event> eventIterator = attention.eventIterator();
-        // TODO check need of synchronization
         while(false == targetIsAchieved) {
-            eventIterator.next().affectBehavior(getBehavior());
+            attention.next().affectBehavior(getBehavior());
         }
     }
 
