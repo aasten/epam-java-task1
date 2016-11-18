@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.ListIterator;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 
 public class TowardsBackwardsCyclicRoute implements Route {
@@ -19,7 +20,13 @@ public class TowardsBackwardsCyclicRoute implements Route {
                                   Double/*distance*/>> towardsDirection) {
         routeMap = towardsDirection;
         stationListTowards.addAll(towardsDirection.keySet());        
-        // TODO verifying and completion the route map
+        // completion the route map
+        for(Station s : towardsDirection.keySet()) {
+            for(Entry<Station, Double> entry : towardsDirection.get(s).entrySet()) {
+                // backwards distance
+                routeMap.get(entry.getKey()).put(s, entry.getValue());
+            }
+        }
     }
     
     public Iterator<RouteElement> getFirst() {
@@ -51,6 +58,9 @@ public class TowardsBackwardsCyclicRoute implements Route {
                         };
                     } else {
                         towards = false;
+                        // "The first call to previous returns the same element as the last call to next."
+                        // https://docs.oracle.com/javase/tutorial/collections/interfaces/list.html
+                        iterator.previous();
                         return next();
                     }
                 } else { // backwards
@@ -69,6 +79,10 @@ public class TowardsBackwardsCyclicRoute implements Route {
                         };
                     } else {
                         towards = true;
+                        // "Similarly, the first call to next after a sequence of calls to previous 
+                        // returns the same element as the last call to previous."
+                        // https://docs.oracle.com/javase/tutorial/collections/interfaces/list.html
+                        iterator.next();  
                         return next();
                     }
                 }

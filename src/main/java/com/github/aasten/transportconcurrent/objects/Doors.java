@@ -21,12 +21,12 @@ public class Doors {
         boolean isOpen() { return isOpen; }
     }
     
-//    private final long WAIT_PASSENGER_AT_DOORS_MSEC = 1000;
+    private final long WAIT_PASSENGER_AFTER_QUEUE_EMPTY_MSEC = 1000;
     
     private Bus bus;
     private final DoorState doorState = new DoorState(false);
-    private Queue<Passenger> enterQueue = new ArrayDeque<Passenger>();
-    private Queue<Passenger> exitQueue = new ArrayDeque<Passenger>();
+    private final Queue<Passenger> enterQueue = new ArrayDeque<Passenger>();
+    private final Queue<Passenger> exitQueue = new ArrayDeque<Passenger>();
     
     public Doors(Bus bus) {
         this.bus = bus;
@@ -42,55 +42,55 @@ public class Doors {
     void close() {
         synchronized(doorState) {
             doorState.setIsOpen(false);
-            synchronized(exitQueue) {
-                exitQueue.clear();
-            }
-            synchronized(enterQueue) {
-                enterQueue.clear();
-            }
+        }
+        synchronized(exitQueue) {
+            exitQueue.clear();
+        }
+        synchronized(enterQueue) {
+            enterQueue.clear();
         }
     }
     
     public void process() {
         while(true) {
-            synchronized(doorState) {
                 // process all the queues that are filled for this moment
-                try {
-//                    if(false == doorState.isOpen()) {
+            try {
+                synchronized(doorState) {
+                        
+                    if(false == doorState.isOpen()) {
                         doorState.wait(); // for open
-//                    }
-                    
-                 
-                    synchronized(exitQueue) {
-                        while(!exitQueue.isEmpty() /*&& doorState.isOpen()*/) {
-                            exit(exitQueue.poll());
-//                            if(exitQueue.isEmpty()) {
-//                             // wait for passenger if is not enqueued yet
-//                                exitQueue.wait(WAIT_PASSENGER_AT_DOORS_MSEC);
-//                            }
+                    }
+                }
+             
+                synchronized(exitQueue) {
+                    while(!exitQueue.isEmpty() /*&& doorState.isOpen()*/) {
+                        exit(exitQueue.remove());
+                        if(exitQueue.isEmpty()) {
+                         // wait for passenger if is not enqueued yet
+                            exitQueue.wait(WAIT_PASSENGER_AFTER_QUEUE_EMPTY_MSEC);
                         }
                     }
-                    synchronized(enterQueue) {
-                        while((!enterQueue.isEmpty() && !bus.isFull())  /*&& doorState.isOpen()*/) {
-                            tryEnter(enterQueue.remove());
-//                            if(enterQueue.isEmpty() && !bus.isFull()) {
-//                                // wait for passenger if is not enqueued yet
-//                                enterQueue.wait(WAIT_PASSENGER_AT_DOORS_MSEC);
-//                            }
-                        }
-                        if(!enterQueue.isEmpty()) {
-                            // bus is full
-                            enterQueue.clear();
+                }
+                synchronized(enterQueue) {
+                    while((!enterQueue.isEmpty() && !bus.isFull())  /*&& doorState.isOpen()*/) {
+                        tryEnter(enterQueue.remove());
+                        if(enterQueue.isEmpty() && !bus.isFull()) {
+                            // wait for passenger if is not enqueued yet
+                            enterQueue.wait(WAIT_PASSENGER_AFTER_QUEUE_EMPTY_MSEC);
                         }
                     }
+                    if(!enterQueue.isEmpty()) {
+                        // bus is full
+                        enterQueue.clear();
+                    }
+                }
                     
 //                    synchronized(anyPassengerAtDoors) {
 //                        if()
 //                    }
                     
-                } catch (InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
-                }
+            } catch (InterruptedException e) {
+                LoggerFactory.getLogger(getClass()).warn(e.getMessage());
             }
         }
     }
@@ -119,13 +119,13 @@ public class Doors {
     public void enqueueEnter(Passenger passenger) {
         synchronized(enterQueue) {
             enterQueue.add(passenger);
-//            enterQueue.notifyAll();
+            enterQueue.notifyAll();
         }
     }
     public void enqueueExit(Passenger passenger) {
         synchronized(exitQueue) {
             exitQueue.add(passenger);
-//            exitQueue.notifyAll();
+            exitQueue.notifyAll();
         }
     }
     

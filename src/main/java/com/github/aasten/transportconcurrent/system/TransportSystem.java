@@ -117,17 +117,17 @@ public class TransportSystem {
         for(Thread t : threads) {
             t.start();
         }
-        LoggerFactory.getLogger(TransportSystem.class).trace("Started execution");
+        LoggerFactory.getLogger(TransportSystem.class).trace("Initialized and started");
         
-        for(Thread t : threads) {
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                LoggerFactory.getLogger(t.getClass()).warn(e.getMessage());
-            }
-        }
+//        for(Thread t : threads) {
+//            try {
+//                t.join();
+//            } catch (InterruptedException e) {
+//                LoggerFactory.getLogger(t.getClass()).warn(e.getMessage());
+//            }
+//        }
         
-        LoggerFactory.getLogger(TransportSystem.class).trace("Finished execution");
+//        LoggerFactory.getLogger(TransportSystem.class).trace("Finished execution");
         
     }
     

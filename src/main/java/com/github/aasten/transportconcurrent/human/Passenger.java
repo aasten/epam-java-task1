@@ -22,14 +22,14 @@ public class Passenger extends Human implements HavingTarget {
     
     @Override
     void setBehavior(Behavior behavior) {
-        synchronized (currentBehavior) {
+        synchronized (this) {
             currentBehavior = behavior;
         }
     }
     
     @Override
     public Behavior getBehavior() {
-        synchronized (currentBehavior) {
+        synchronized (this) {
             return currentBehavior;
         }
     }

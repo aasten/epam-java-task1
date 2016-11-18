@@ -29,7 +29,7 @@ public class Bus implements EventEnvironment {
     // waiting for queues populated after arriving before entering/exiting
     private final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
     private final Object passengerEntering = new Object();
-    private final Object allPassengersPassed = new Object();
+//    private final Object allPassengersPassed = new Object();
     
     public Bus(int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
@@ -71,13 +71,13 @@ public class Bus implements EventEnvironment {
                 notifyAbout(new PassengerBusStationEvent(
                             passenger, this, currentStation, 
                             EventType.PASSENGER_ENTERED_BUS));
-                // TODO inefficient, replace with some event?
-                if(isAllDoorsQueuesEmpty()) {
-                    boardingFinished();
-                }
+//                // TODO inefficient, replace with some event?
+//                if(isAllDoorsQueuesEmpty()) {
+//                    boardingFinished();
+//                }
                 return true;
             } else {
-                boardingFinished();
+//                boardingFinished();
                 return false;
             }
         }
@@ -95,22 +95,23 @@ public class Bus implements EventEnvironment {
     }
     
     // TODO optimize this by using events from doors instead of this method?
-    private boolean isAllDoorsQueuesEmpty() {
-        boolean thereIsSomebody = false; // consider empty apriori 
-        for(Doors d : doors) {
-            if(d.enterQueueLength() > 0 || d.exitQueueLength() > 0) {
-                thereIsSomebody |= true;
-            }
-        }
-        return !thereIsSomebody;
-    }
+//    private boolean isAllDoorsQueuesEmpty() {
+//        boolean thereIsSomebody = false; // consider empty apriori 
+//        for(Doors d : doors) {
+//            if(d.enterQueueLength() > 0 || d.exitQueueLength() > 0) {
+//                thereIsSomebody |= true;
+//            }
+//        }
+//        return !thereIsSomebody;
+//    }
     
-    private void boardingFinished() {
-        closeAllDoors();
-        synchronized(allPassengersPassed) {
-            allPassengersPassed.notifyAll(); // to continue walking the route
-        }
-    }
+//    @Deprecated
+//    private void boardingFinished() {
+//        closeAllDoors();
+//        synchronized(allPassengersPassed) {
+//            allPassengersPassed.notifyAll(); // to continue walking the route
+//        }
+//    }
     
     void exit(Passenger passenger) {
         synchronized(passengerEntering) {
@@ -118,10 +119,13 @@ public class Bus implements EventEnvironment {
                 currentPlacesTaken--;
             }
             unSubscribe(passenger.getAttention());
-            // TODO inefficient, replace with some event? 
-            if(isAllDoorsQueuesEmpty()) {
-                boardingFinished();
-            }
+            currentStation.notifyAbout(new PassengerBusStationEvent(
+                    passenger, this, currentStation, 
+                    EventType.PASSENGER_EXITED_BUS));
+//            // TODO inefficient, replace with some event? 
+//            if(isAllDoorsQueuesEmpty()) {
+//                boardingFinished();
+//            }
         }
     }
     
@@ -158,15 +162,19 @@ public class Bus implements EventEnvironment {
                     currentStation = r.nextStation();
                     // wait for free place for bus if busy
                     currentStation.takeBusPlace();
-                    openAllDoors();
                     Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
                     this.notifyAbout(arriving);
                     currentStation.notifyAbout(arriving);
-                    synchronized(allPassengersPassed) {
-                        // wait for passengers to fill queues for exit and enter
-                        Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
-                        allPassengersPassed.wait(); // for all passengers entered
-                    }
+//                    synchronized(allPassengersPassed) {
+                    openAllDoors();
+                    // wait for passengers to fill queues for exit and enter
+                    Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
+                    // will close after single iteration for processing queues
+                    // which has been formed for this time
+                    // TODO infinite cycle may be here if passengers appear more and more
+                    closeAllDoors();
+//                        allPassengersPassed.wait(); // for all passengers entered
+//                    }
                     Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
                     this.notifyAbout(departure);
                     currentStation.notifyAbout(departure);
