@@ -160,8 +160,9 @@ public class TransportSystem {
 
         @Override
         public void run() {
+            LoggerFactory.getLogger("AAA").trace("ttt");
             while(true) {
-                LoggerFactory.getLogger(TransportSystem.class).trace(iterator.next().toString());
+                LoggerFactory.getLogger(TransportSystem.class).info(iterator.next().toString());
             }
         }
         
