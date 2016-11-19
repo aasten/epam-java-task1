@@ -1,6 +1,6 @@
 package com.github.aasten.transportconcurrent;
 
-import java.io.File;
+import java.util.ResourceBundle;
 
 import com.github.aasten.transportconcurrent.system.TransportSystem;
 
@@ -10,8 +10,10 @@ import com.github.aasten.transportconcurrent.system.TransportSystem;
  */
 public class App 
 {
+    private static final String PROPERTY_FILE_NAME = "in"; 
+    
     public static void main( String[] args )
     {
-        TransportSystem.execute(new File("/tmp/1"));
+        TransportSystem.execute(ResourceBundle.getBundle(PROPERTY_FILE_NAME));
     }
 }

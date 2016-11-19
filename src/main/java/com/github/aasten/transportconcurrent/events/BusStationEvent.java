@@ -9,7 +9,7 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
     public enum EventType {
         BUS_ARRIVED,
 //        DOORS_OPENED,
-        BUS_FULL,
+//        BUS_FULL,
 //        DOORS_CLOSED,
         BUS_DEPARTURED,
     }
@@ -32,6 +32,20 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
     
     public void affectBehavior(Behavior behavior) { 
         behavior.behaveAccording(this);
+    }
+    
+    @Override
+    public String toString() {
+        String ret = null;
+        switch(type) {
+        case BUS_ARRIVED:
+            ret = "Bus " + bus + " arrived to station " + station;
+            break;
+        case BUS_DEPARTURED:
+            ret = "Bus " + bus + " departured from station " + station;
+            break;
+        }
+        return ret;
     }
 
 }

@@ -11,18 +11,18 @@ import java.util.NoSuchElementException;
 public class TowardsBackwardsCyclicRoute implements Route {
 
     private ArrayList<Station> stationListTowards = new ArrayList<>();
-    private LinkedHashMap<Station, HashMap<Station, Double>> routeMap;
+    private LinkedHashMap<Station, HashMap<Station, Integer>> routeMap;
     
     
     public TowardsBackwardsCyclicRoute(
             LinkedHashMap<Station,/*another station on the towards direction*/
                           HashMap<Station,/*neighbor station, towards or backwards*/
-                                  Double/*distance*/>> towardsDirection) {
+                                  Integer/*distance, m*/>> towardsDirection) {
         routeMap = towardsDirection;
         stationListTowards.addAll(towardsDirection.keySet());        
         // completion the route map
         for(Station s : towardsDirection.keySet()) {
-            for(Entry<Station, Double> entry : towardsDirection.get(s).entrySet()) {
+            for(Entry<Station, Integer> entry : towardsDirection.get(s).entrySet()) {
                 // backwards distance
                 routeMap.get(entry.getKey()).put(s, entry.getValue());
             }
@@ -45,14 +45,14 @@ public class TowardsBackwardsCyclicRoute implements Route {
                 if(towards) {
                     if(iterator.hasNext()) {
                         final Station station = iterator.next();
-                        final double distance = (null == currentStation) ? 0
+                        final int distance = (null == currentStation) ? 0
                                 : routeMap.get(currentStation).get(station);
                         currentStation = station;
                         return new RouteElement() {
                             public Station nextStation() {
                                 return station;
                             }
-                            public double distanceMeters() {
+                            public int distanceMeters() {
                                 return distance;
                             }
                         };
@@ -66,14 +66,14 @@ public class TowardsBackwardsCyclicRoute implements Route {
                 } else { // backwards
                     if(iterator.hasPrevious()) {
                         final Station station = iterator.previous();
-                        final double distance = (null == currentStation) ? 0
+                        final int distance = (null == currentStation) ? 0
                                 : routeMap.get(currentStation).get(station);
                         currentStation = station;
                         return new RouteElement() {
                             public Station nextStation() {
                                 return station;
                             }
-                            public double distanceMeters() {
+                            public int distanceMeters() {
                                 return distance;
                             }
                         };

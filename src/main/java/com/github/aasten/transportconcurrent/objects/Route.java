@@ -5,7 +5,7 @@ import java.util.Iterator;
 public interface Route {
     interface RouteElement {
         Station nextStation();
-        double distanceMeters();
+        int distanceMeters();
     }
     Iterator<RouteElement> getFirst();
 }

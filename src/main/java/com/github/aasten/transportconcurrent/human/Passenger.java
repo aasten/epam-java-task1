@@ -56,5 +56,10 @@ public class Passenger extends Human implements HavingTarget {
             attention.next().affectBehavior(getBehavior());
         }
     }
+    
+    @Override
+    public String toString() {
+        return "P(--> " + destination + ")"; 
+    }
 
 }

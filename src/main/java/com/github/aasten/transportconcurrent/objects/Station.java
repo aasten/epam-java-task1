@@ -79,4 +79,9 @@ public class Station implements EventEnvironment {
             notifyAll();
         }
     }
+    
+    @Override
+    public String toString() {
+        return name;
+    }
 }

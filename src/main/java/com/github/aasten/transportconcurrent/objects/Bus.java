@@ -18,7 +18,10 @@ import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 // TODO seems to have to many tasks
 public class Bus implements EventEnvironment {
 
-    private final int CAPACITY;
+    private static final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
+    
+    
+    private final int capacity;
     private int currentPlacesTaken = 0;
     private final List<Doors> doors;
     private Station currentStation;
@@ -27,13 +30,14 @@ public class Bus implements EventEnvironment {
     private double initialDelay;
     private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
     // waiting for queues populated after arriving before entering/exiting
-    private final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
     private final Object passengerEntering = new Object();
+    private final String busId;
 //    private final Object allPassengersPassed = new Object();
     
-    public Bus(int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
+    public Bus(String id, int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
-        this.CAPACITY = capacity;
+        busId = id;
+        this.capacity = capacity;
         if(doorsCount < 1) {
             // TODO log this
             doorsCount = 1;
@@ -58,7 +62,7 @@ public class Bus implements EventEnvironment {
     
     public boolean isFull() {
         synchronized(passengerEntering) {
-            return currentPlacesTaken >= CAPACITY;
+            return currentPlacesTaken >= capacity;
         }
     }
     
@@ -184,6 +188,12 @@ public class Bus implements EventEnvironment {
                 LoggerFactory.getLogger(getClass()).warn(e.getMessage());
             } // for the entering process finished
         }
+    }
+    
+    
+    @Override
+    public String toString() {
+        return busId + "," + capacity + "," + currentPlacesTaken;
     }
     
 }

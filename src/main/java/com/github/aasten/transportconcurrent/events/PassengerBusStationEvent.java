@@ -43,4 +43,22 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
         behavior.behaveAccording(this);
     }
     
+    @Override
+    public String toString() {
+        String ret = null;
+        switch(type) {
+        case PASSENGER_ENTERED_BUS:
+            ret = "Passenger " + passenger + " entered the bus " + bus + " at station " + station;
+            break;
+        case PASSENGER_AT_STATION:
+            ret = "Passenger " + passenger + " is at station " + station;
+            break;
+        case PASSENGER_EXITED_BUS:
+            ret = "Passenger " + passenger + " exited the bus " + bus + " at station " + station;
+            break;
+        }
+        
+        return ret;
+    }
+    
 }
