@@ -1,7 +1,7 @@
 package com.github.aasten.transportconcurrent.system;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -12,6 +12,7 @@ import java.util.ResourceBundle;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.human.QueuedAttention;
 import com.github.aasten.transportconcurrent.objects.Bus;
@@ -181,16 +182,23 @@ public class TransportSystem {
         }
         addRunnablesToNewDaemonThreads(threads, busRouteWalkings);
         
-        QueuedAttention loggingAttention = new QueuedAttention();
+        // Logging
+        {
+        // several attentions to show origin of events in common log
+        LoggingAttention loggingAttentionInsideBuses = new LoggingAttention("Inside bus");
         for(final EventEnvironment e : buses) {
-            e.subscribeToEvents(loggingAttention);
+            e.subscribeToEvents(loggingAttentionInsideBuses);
         }
+        LoggingAttention loggingAttentionAtStations = new LoggingAttention("At station");
         for(final EventEnvironment e : stationList) {
-            e.subscribeToEvents(loggingAttention);
+            e.subscribeToEvents(loggingAttentionAtStations);
         }
         
-        Logging loggingProcess = new Logging(loggingAttention);
-        addRunnablesToNewDaemonThreads(threads, Collections.singletonList(loggingProcess));
+        List<Runnable> loggingProcesses = new ArrayList<>();
+        loggingProcesses.add(new Logging(loggingAttentionInsideBuses));
+        loggingProcesses.add(new Logging(loggingAttentionAtStations));
+        addRunnablesToNewDaemonThreads(threads, loggingProcesses);
+        }
         
         // doorsThread
         List<Runnable> doorsProcesses = new ArrayList<>();
@@ -206,11 +214,56 @@ public class TransportSystem {
         }
         addRunnablesToNewDaemonThreads(threads, doorsProcesses);
         
+        LoggerFactory.getLogger(TransportSystem.class).info("LOGGING LEGEND:" +
+                "S means \"Station\", B means \"Bus\", P means \"Passenger\". B2,10,1 means " + 
+                "Bus number 2 with capacity of 10 places and currently taken 1 place\n" + 
+                "LOGGING LEGEND: Line format: (<Event environment kind>=[Inside bus|At station]): " +
+                "[<Event time>] <Event content with any use of 'P', 'S', 'B'>\n" + 
+                "LOGGING LEGEND: Example: (At station): [Sun Nov 20 01:59:35 MSK 2016] S7 << B2,10,0\n" +
+                "LOGGING LEGEND: Explanation: Event inside bus at Nov 20 01:59:35, Bus number 2 with " + 
+                "capacity of 10 places with 0 taken places has arrived to the Station number 7\n" + 
+                "LOGGING LEGEND: Example: (Inside bus): [Sun Nov 20 01:56:40 MSK 2016] S9:B7,10,0 >> P(--> S9)\n" +
+                "LOGGING LEGEND: Explanation: Event inside the bus at Nov 20 01:56:40, Passenger whose destination is Station number 9 " +
+                "has exited at Station number 9 from the Bus number 7 with 10 places capacity and currently taken 0 ones");
+        
         for(Thread t : threads) {
             t.start();
         }
         LoggerFactory.getLogger(TransportSystem.class).trace("Initialized and started");
         
+    }
+    
+    private static class LoggingAttention extends QueuedAttention {
+        private static class EventTrackedByLogger implements Event {
+            private Event source;
+            private String loggerId;
+            public EventTrackedByLogger(Event event, String loggerId) {
+                source = event;
+                this.loggerId = loggerId;
+            }
+            @Override
+            public Date getTimestamp() {
+                return source.getTimestamp();
+            }
+            @Override
+            public void affectBehavior(Behavior behavior) {
+                source.affectBehavior(behavior);
+            }
+            // Decorating here
+            @Override
+            public String toString() {
+                return "(" + loggerId + "): " + source.toString();
+            }
+            
+        }
+        private String loggerId;
+        public LoggingAttention(String loggerId) {
+            this.loggerId = loggerId;
+        }
+        @Override
+        public Event next() {
+            return new EventTrackedByLogger(super.next(), loggerId);
+        }
     }
     
     
