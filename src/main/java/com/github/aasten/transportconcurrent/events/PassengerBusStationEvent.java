@@ -9,7 +9,6 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
 
     public enum EventType {
         PASSENGER_ENTERED_BUS,
-        PASSENGER_AT_STATION,
         PASSENGER_EXITED_BUS,
     }
     
@@ -48,13 +47,10 @@ public class PassengerBusStationEvent extends TimestampEvent implements StationE
         String ret = null;
         switch(type) {
         case PASSENGER_ENTERED_BUS:
-            ret = "Passenger " + passenger + " entered the bus " + bus + " at station " + station;
-            break;
-        case PASSENGER_AT_STATION:
-            ret = "Passenger " + passenger + " is at station " + station;
+            ret = "[" + getTimestamp() + "] " + station + ":" + bus + " << " + passenger;
             break;
         case PASSENGER_EXITED_BUS:
-            ret = "Passenger " + passenger + " exited the bus " + bus + " at station " + station;
+            ret = "[" + getTimestamp() + "] " + station + ":" + bus + " >> " + passenger;
             break;
         }
         

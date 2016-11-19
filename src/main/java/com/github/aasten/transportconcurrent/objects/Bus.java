@@ -32,7 +32,6 @@ public class Bus implements EventEnvironment {
     // waiting for queues populated after arriving before entering/exiting
     private final Object passengerEntering = new Object();
     private final String busId;
-//    private final Object allPassengersPassed = new Object();
     
     public Bus(String id, int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
@@ -70,18 +69,13 @@ public class Bus implements EventEnvironment {
         synchronized(passengerEntering) {
             if(!isFull()) {
                 currentPlacesTaken++;
-                subscribeToEvents(passenger.getAttention());
                 // notify passenger through own event environment
-                notifyAbout(new PassengerBusStationEvent(
-                            passenger, this, currentStation, 
-                            EventType.PASSENGER_ENTERED_BUS));
-//                // TODO inefficient, replace with some event?
-//                if(isAllDoorsQueuesEmpty()) {
-//                    boardingFinished();
-//                }
+                Event passengerEntered = new PassengerBusStationEvent(
+                        passenger, this, currentStation, 
+                        EventType.PASSENGER_ENTERED_BUS);
+                currentStation.notifyAbout(passengerEntered);
                 return true;
             } else {
-//                boardingFinished();
                 return false;
             }
         }
@@ -98,38 +92,15 @@ public class Bus implements EventEnvironment {
         }
     }
     
-    // TODO optimize this by using events from doors instead of this method?
-//    private boolean isAllDoorsQueuesEmpty() {
-//        boolean thereIsSomebody = false; // consider empty apriori 
-//        for(Doors d : doors) {
-//            if(d.enterQueueLength() > 0 || d.exitQueueLength() > 0) {
-//                thereIsSomebody |= true;
-//            }
-//        }
-//        return !thereIsSomebody;
-//    }
-    
-//    @Deprecated
-//    private void boardingFinished() {
-//        closeAllDoors();
-//        synchronized(allPassengersPassed) {
-//            allPassengersPassed.notifyAll(); // to continue walking the route
-//        }
-//    }
     
     void exit(Passenger passenger) {
         synchronized(passengerEntering) {
             if(currentPlacesTaken > 0 ) {
                 currentPlacesTaken--;
             }
-            unSubscribe(passenger.getAttention());
-            currentStation.notifyAbout(new PassengerBusStationEvent(
+            notifyAbout(new PassengerBusStationEvent(
                     passenger, this, currentStation, 
                     EventType.PASSENGER_EXITED_BUS));
-//            // TODO inefficient, replace with some event? 
-//            if(isAllDoorsQueuesEmpty()) {
-//                boardingFinished();
-//            }
         }
     }
     
@@ -169,7 +140,6 @@ public class Bus implements EventEnvironment {
                     Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
                     this.notifyAbout(arriving);
                     currentStation.notifyAbout(arriving);
-//                    synchronized(allPassengersPassed) {
                     openAllDoors();
                     // wait for passengers to fill queues for exit and enter
                     Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
@@ -177,8 +147,6 @@ public class Bus implements EventEnvironment {
                     // which has been formed for this time
                     // TODO infinite cycle may be here if passengers appear more and more
                     closeAllDoors();
-//                        allPassengersPassed.wait(); // for all passengers entered
-//                    }
                     Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
                     this.notifyAbout(departure);
                     currentStation.notifyAbout(departure);

@@ -47,21 +47,19 @@ public class PassengerBehaviorInsideBus extends DefaultPassengerBehavior {
     public void behaveAccording(PassengerBusStationEvent event) {
         if(event.getPassenger().equals(passenger)) {
             switch(event.getType()) {
-            case PASSENGER_ENTERED_BUS:
-                event.getStation().unSubscribe(passenger.getAttention());
-                break;
             case PASSENGER_EXITED_BUS:
                 event.getBus().unSubscribe(passenger.getAttention());
                 if(event.getStation().equals(passenger.getDestination())) {
                     passenger.targetIsAchieved();
                 } // else crying XO
+                else {
+                    event.getStation().subscribeToEvents(passenger.getAttention());
+                }
                 break;
             default:
                 break;
             }
-        } else {
-            // TODO log this, for the optimizing reasons this should not occur
-        }
+        } 
     }
 
 }

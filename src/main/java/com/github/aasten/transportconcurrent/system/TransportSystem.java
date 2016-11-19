@@ -42,8 +42,9 @@ public class TransportSystem {
         }
     }
     
-//    private static final int MIN_DISTANCE_BETWEEN_STATIONS_METERS = 100;
-//    private static final int MAX_DISTANCE_BETWEEN_STATIONS_METERS = 500;
+    // for logging completion before shutting down its daemon thread
+    private static final long SLEEP_PASSENGER_AFTER_TARGET_ACHIEVED = 1000;
+    
     
     public static void execute(ResourceBundle resourceBundle) throws IllegalArgumentException {
         // TODO read property file
@@ -129,6 +130,11 @@ public class TransportSystem {
                 passengerProcesses.add(new Runnable() {
                     public void run() {
                         p.targetAchieving();
+                        try {
+                            Thread.sleep(SLEEP_PASSENGER_AFTER_TARGET_ACHIEVED);
+                        } catch (InterruptedException e) {
+                            LoggerFactory.getLogger(TransportSystem.class).warn(e.getMessage());
+                        }
                     }
                 });
             }

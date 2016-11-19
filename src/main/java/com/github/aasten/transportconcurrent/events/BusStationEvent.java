@@ -39,10 +39,10 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
         String ret = null;
         switch(type) {
         case BUS_ARRIVED:
-            ret = "Bus " + bus + " arrived to station " + station;
+            ret = "[" + getTimestamp() + "] " + station + " << " + bus;
             break;
         case BUS_DEPARTURED:
-            ret = "Bus " + bus + " departured from station " + station;
+            ret = "[" + getTimestamp() + "] " + station + " >> " + bus;
             break;
         }
         return ret;
