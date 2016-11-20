@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent.EventType;
 import com.github.aasten.transportconcurrent.human.Attention;
@@ -16,7 +17,7 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 
 // TODO seems to have to many tasks
-public class Bus implements EventEnvironment {
+public class Bus implements EventEnvironment, IncomingEventsProcessing {
 
     private static final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
     
@@ -28,7 +29,7 @@ public class Bus implements EventEnvironment {
     private Route route;
     private volatile double averageSpeedMeterPerSec;
     private double initialDelay;
-    private EventEnvironment delegateEventProcessing = new BasicEventProcessing();
+    private BasicEventProcessing delegateEventProcessing = new BasicEventProcessing();
     // waiting for queues populated after arriving before entering/exiting
     private final Object passengerEntering = new Object();
     private final String busId;
@@ -117,11 +118,13 @@ public class Bus implements EventEnvironment {
     }
 
     public void notifyAbout(Event event) {
+        // will wait until all the attentions are notified
         delegateEventProcessing.notifyAbout(event); 
     }
 
-    public void launchInfinitely() {
-        delegateEventProcessing.launchInfinitely();
+    @Override
+    public Runnable getEventProcessor() {
+        return delegateEventProcessing;
     }
     
     

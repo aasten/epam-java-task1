@@ -12,6 +12,7 @@ import java.util.ResourceBundle;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.human.QueuedAttention;
@@ -95,13 +96,8 @@ public class TransportSystem {
         
         List<Runnable> stationProcessings = new ArrayList<>();
         // infinitely launch event processing on event environment
-        for(final EventEnvironment e : stationList) {
-            stationProcessings.add(new Runnable() {
-                @Override
-                public void run() {
-                    e.launchInfinitely();
-                }
-            });
+        for(final IncomingEventsProcessing p : stationList) {
+            stationProcessings.add(p.getEventProcessor());
         }
         addRunnablesToNewDaemonThreads(threads, stationProcessings);
         
@@ -163,12 +159,8 @@ public class TransportSystem {
         // busThread
         List<Runnable> busEventProcessings = new ArrayList<>();
         // infinitely launch event processing on event environment
-        for(final EventEnvironment e : buses) {
-            busEventProcessings.add(new Runnable() {
-                public void run() {
-                    e.launchInfinitely();
-                }
-            });
+        for(final IncomingEventsProcessing p : buses) {
+            busEventProcessings.add(p.getEventProcessor());
         }
         addRunnablesToNewDaemonThreads(threads, busEventProcessings);
         
