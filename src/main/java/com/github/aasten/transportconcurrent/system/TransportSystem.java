@@ -215,16 +215,15 @@ public class TransportSystem {
         addRunnablesToNewDaemonThreads(threads, doorsProcesses);
         
         LoggerFactory.getLogger(TransportSystem.class).info("LOGGING LEGEND:" +
-                "S means \"Station\", B means \"Bus\", P means \"Passenger\". B2,10,1 means " + 
-                "Bus number 2 with capacity of 10 places and currently taken 1 place\n" + 
+                "S means \"Station\", B means \"Bus\", P means \"Passenger\". \n" + 
                 "LOGGING LEGEND: Line format: (<Event environment kind>=[Inside bus|At station]): " +
                 "[<Event time>] <Event content with any use of 'P', 'S', 'B'>\n" + 
-                "LOGGING LEGEND: Example: (At station): [Sun Nov 20 01:59:35 MSK 2016] S7 << B2,10,0\n" +
-                "LOGGING LEGEND: Explanation: Event inside bus at Nov 20 01:59:35, Bus number 2 with " + 
-                "capacity of 10 places with 0 taken places has arrived to the Station number 7\n" + 
-                "LOGGING LEGEND: Example: (Inside bus): [Sun Nov 20 01:56:40 MSK 2016] S9:B7,10,0 >> P(--> S9)\n" +
+                "LOGGING LEGEND: Example: (At station): [Sun Nov 20 01:59:35 MSK 2016] S7 << B2\n" +
+                "LOGGING LEGEND: Explanation: Event inside bus at Nov 20 01:59:35, Bus number 2 " + 
+                "has arrived to the Station number 7\n" + 
+                "LOGGING LEGEND: Example: (Inside bus): [Sun Nov 20 01:56:40 MSK 2016] S9:B7 >> P(--> S9)\n" +
                 "LOGGING LEGEND: Explanation: Event inside the bus at Nov 20 01:56:40, Passenger whose destination is Station number 9 " +
-                "has exited at Station number 9 from the Bus number 7 with 10 places capacity and currently taken 0 ones");
+                "has exited at Station number 9 from the Bus number 7");
         
         for(Thread t : threads) {
             t.start();

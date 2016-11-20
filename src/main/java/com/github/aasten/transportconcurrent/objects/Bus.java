@@ -161,7 +161,7 @@ public class Bus implements EventEnvironment {
     
     @Override
     public String toString() {
-        return busId + "," + capacity + "," + currentPlacesTaken;
+        return busId;
     }
     
 }
