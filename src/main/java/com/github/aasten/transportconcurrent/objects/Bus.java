@@ -72,10 +72,9 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
             if(!isFull()) {
                 currentPlacesTaken++;
                 // notify passenger through own event environment
-                Event passengerEntered = new PassengerBusStationEvent(
+                currentStation.notifyAbout(new PassengerBusStationEvent(
                         passenger, this, currentStation, 
-                        EventType.PASSENGER_ENTERED_BUS, delegateEventProcessing);
-                currentStation.notifyAbout(passengerEntered);
+                        EventType.PASSENGER_ENTERED_BUS, currentStation));
                 return true;
             } else {
                 return false;
@@ -102,7 +101,7 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
             }
             notifyAbout(new PassengerBusStationEvent(
                     passenger, this, currentStation, 
-                    EventType.PASSENGER_EXITED_BUS, delegateEventProcessing));
+                    EventType.PASSENGER_EXITED_BUS, this));
         }
     }
     
@@ -141,16 +140,10 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
                     currentStation = r.nextStation();
                     // wait for free place for bus if busy
                     currentStation.takeBusPlace();
-                    {
-                        Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
-                                                             this);
-                        this.notifyAbout(arriving);
-                    }
-                    {
-                        Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
-                                currentStation);
-                        currentStation.notifyAbout(arriving);
-                    }
+                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                            this));
+                    currentStation.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                            currentStation));
                     openAllDoors();
                     // wait for passengers to fill queues for exit and enter
                     Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
@@ -158,16 +151,13 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
                     // which has been formed for this time
                     // TODO infinite cycle may be here if passengers appear more and more
                     closeAllDoors();
-                    {
-                        Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
-                                                              this);
-                        this.notifyAbout(departure);
-                    }
-                    {
-                        Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
-                                currentStation);
-                        currentStation.notifyAbout(departure);
-                    }
+
+                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                            this));
+
+                    currentStation.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                            currentStation));
+
                     currentStation.releaseBusPlace();
                 } while(routeIterator.hasNext());
             } catch (InterruptedException e) {

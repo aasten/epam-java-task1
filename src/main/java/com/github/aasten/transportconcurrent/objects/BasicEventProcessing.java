@@ -130,6 +130,8 @@ public class BasicEventProcessing implements Runnable, EventEnvironment, EventEn
                     }
                 } else {
                     allAttentionsNotifiedAboutEvent.notifyAll();
+                    LoggerFactory.getLogger(getClass()).warn("Bug may be here " + getClass() + 
+                            "#eventWasNoticed(): received feedback of event that has no expectants");
                 }
             }
         }
