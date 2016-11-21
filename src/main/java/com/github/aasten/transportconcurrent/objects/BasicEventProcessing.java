@@ -16,18 +16,18 @@ import com.github.aasten.transportconcurrent.human.Attention;
 
 public class BasicEventProcessing implements Runnable, EventEnvironment, EventEnvironmentFeedback {
 
-    Set<Attention> allAttentions = new HashSet<>();
-    private final Queue<Event> eventQueue = new ArrayDeque<Event>();
+    private volatile Set<Attention> allAttentions = new HashSet<>();
+    private volatile Queue<Event> eventQueue = new ArrayDeque<Event>();
     private final Object allAttentionsNotifiedAboutEvent = new Object();
-    private final Map<Event,Integer> currentlyNotifiedAttentionCount = new HashMap<>();
+    private volatile Map<Event,Integer> currentlyNotifiedAttentionCount = new HashMap<>();
     // prevent from invoking run() method from several threads
     private final Object soleEventProcessing = new Object();
     
     @Override
     public void subscribeToEvents(Attention attention) {
         synchronized(allAttentions) {
-            allAttentions.add(attention);
             synchronized(currentlyNotifiedAttentionCount) {
+                allAttentions.add(attention);
                 // add this attention to actual events
 //                for(Event keyEvent : currentlyNotifiedAttentions.keySet()) {
 //                    currentlyNotifiedAttentions.get(keyEvent).add(attention);
@@ -57,18 +57,18 @@ public class BasicEventProcessing implements Runnable, EventEnvironment, EventEn
 
     @Override
     public void notifyAbout(Event event) {
-        synchronized(eventQueue) {
+        synchronized (allAttentionsNotifiedAboutEvent) {
             synchronized(allAttentions) {
                 synchronized(currentlyNotifiedAttentionCount) {
                     currentlyNotifiedAttentionCount.put(event, allAttentions.size());
                 }
             }
-            eventQueue.add(event);
-            // actually, notifyOne might be used for the one-threaded launchInfinitely() call
-            // but keeping to be not dependent on this single-threading processing 
-            eventQueue.notifyAll();
-        }
-        synchronized (allAttentionsNotifiedAboutEvent) {
+            synchronized(eventQueue) {
+                eventQueue.add(event);
+                // actually, notifyOne might be used for the one-threaded launchInfinitely() call
+                // but keeping to be not dependent on this single-threading processing 
+                eventQueue.notifyAll();
+            }
             try {
                 do {
                     allAttentionsNotifiedAboutEvent.wait();
@@ -81,7 +81,7 @@ public class BasicEventProcessing implements Runnable, EventEnvironment, EventEn
     
     private boolean anyAttentionNotNotifiedAbout(Event event) {
         synchronized (currentlyNotifiedAttentionCount) {
-            return currentlyNotifiedAttentionCount.get(event) > 0;
+            return currentlyNotifiedAttentionCount.containsKey(event);
         }
     }
 
@@ -120,8 +120,15 @@ public class BasicEventProcessing implements Runnable, EventEnvironment, EventEn
     public void eventWasNoticed(Event event) {
         synchronized (allAttentionsNotifiedAboutEvent) {
             synchronized (currentlyNotifiedAttentionCount) {
-                currentlyNotifiedAttentionCount.put(event,currentlyNotifiedAttentionCount.get(event) - 1);
-                if(currentlyNotifiedAttentionCount.get(event) < 1) {
+                if(anyAttentionNotNotifiedAbout(event)) {
+                    int notNotifiedYet = currentlyNotifiedAttentionCount.get(event); 
+                    if(notNotifiedYet > 1) {
+                        currentlyNotifiedAttentionCount.put(event, notNotifiedYet - 1);                        
+                    } else {
+                        currentlyNotifiedAttentionCount.remove(event);
+                        allAttentionsNotifiedAboutEvent.notifyAll();
+                    }
+                } else {
                     allAttentionsNotifiedAboutEvent.notifyAll();
                 }
             }

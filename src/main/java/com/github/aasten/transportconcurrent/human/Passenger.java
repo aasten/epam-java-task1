@@ -9,8 +9,10 @@ public class Passenger extends Human implements HavingTarget {
     private Behavior currentBehavior;
     private Station destination;
     private boolean targetIsAchieved = false;
+    private final String id;
     
-    public Passenger(Station initial, Station destination) {
+    public Passenger(String id, Station initial, Station destination) {
+        this.id = id;
         this.destination = destination;
         currentBehavior = new PassengerBehaviorAtStation(this, this.destination);
         initial.subscribeToEvents(attention);
@@ -59,7 +61,7 @@ public class Passenger extends Human implements HavingTarget {
     
     @Override
     public String toString() {
-        return "P(--> " + destination + ")"; 
+        return "P" + id + "(--> " + destination + ")"; 
     }
 
 }

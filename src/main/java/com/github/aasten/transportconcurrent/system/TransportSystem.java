@@ -1,7 +1,6 @@
 package com.github.aasten.transportconcurrent.system;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -11,10 +10,11 @@ import java.util.ResourceBundle;
 
 import org.slf4j.LoggerFactory;
 
+import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.Event;
-import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
-import com.github.aasten.transportconcurrent.events.FeedingBackEvent;
+import com.github.aasten.transportconcurrent.events.Finish;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
+import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.human.QueuedAttention;
@@ -123,7 +123,8 @@ public class TransportSystem {
                     }
                     
                 }
-                final Passenger p = new Passenger(stationList.get(stationIndexFrom),
+                final Passenger p = new Passenger(Integer.toString(i),
+                                                  stationList.get(stationIndexFrom),
                                                   stationList.get(stationIndexTo));
                 passengers.add(p);
                 passengerProcesses.add(new Runnable() {
@@ -179,18 +180,18 @@ public class TransportSystem {
         // Logging
         {
         // several attentions to show origin of events in common log
-        LoggingAttention loggingAttentionInsideBuses = new LoggingAttention("Inside bus");
+        QueuedAttention loggingAttentionInsideBuses = new QueuedAttention();
         for(final EventEnvironment e : buses) {
             e.subscribeToEvents(loggingAttentionInsideBuses);
         }
-        LoggingAttention loggingAttentionAtStations = new LoggingAttention("At station");
+        QueuedAttention loggingAttentionAtStations = new QueuedAttention();
         for(final EventEnvironment e : stationList) {
             e.subscribeToEvents(loggingAttentionAtStations);
         }
         
         List<Runnable> loggingProcesses = new ArrayList<>();
-        loggingProcesses.add(new Logging(loggingAttentionInsideBuses));
-        loggingProcesses.add(new Logging(loggingAttentionAtStations));
+        loggingProcesses.add(new Logging(loggingAttentionInsideBuses, new LoggingBehavior("Inside bus")));
+        loggingProcesses.add(new Logging(loggingAttentionAtStations, new LoggingBehavior("At station")));
         addRunnablesToNewDaemonThreads(threads, loggingProcesses);
         }
         
@@ -226,39 +227,70 @@ public class TransportSystem {
         
     }
     
-    private static class LoggingAttention extends QueuedAttention {
-        private static class EventTrackedByLogger extends FeedingBackEvent {
-            private Event source;
-            private String loggerId;
-            public EventTrackedByLogger(FeedingBackEvent event, String loggerId) {
-                source = event;
-                this.loggerId = loggerId;
-            }
-            // Decorating here
-            @Override
-            public String toString() {
-                return "(" + loggerId + "): " + source.toString();
-            }
-            @Override
-            public void affectBehaviorBeforeFeedback(Behavior behavior) {
-                // do nothing
-            }
-            @Override
-            public EventEnvironmentFeedback getEnvironmentFeedback() {
-                // TODO Auto-generated method stub
-                return source.ge;
-            }
-            
-        }
-        private String loggerId;
-        public LoggingAttention(String loggerId) {
+    private static class LoggingBehavior implements Behavior {
+
+        private final String loggerId;
+        
+        public LoggingBehavior(String loggerId) {
             this.loggerId = loggerId;
         }
+        
         @Override
-        public Event next() {
-            return new EventTrackedByLogger(super.next(), loggerId);
+        public void behaveAccording(BusStationEvent event) {
+            logEvent(event);
         }
+
+        @Override
+        public void behaveAccording(PassengerBusStationEvent event) {
+            logEvent(event);
+        }
+
+        @Override
+        public void behaveAccording(Finish finish) {
+            logEvent(finish);
+        }
+        
+        private void logEvent(Event event) {
+            LoggerFactory.getLogger(TransportSystem.class).info("(" + loggerId + "): " + event.toString());            
+        }
+        
+        
+        
     }
+    
+//    private static class LoggingAttention extends QueuedAttention {
+//        private static class EventTrackedByLogger extends FeedingBackEvent {
+//            private FeedingBackEvent source;
+//            private String loggerId;
+//            public EventTrackedByLogger(FeedingBackEvent event, String loggerId) {
+//                source = event;
+//                this.loggerId = loggerId;
+//            }
+//            // Decorating here
+//            @Override
+//            public String toString() {
+//                return "(" + loggerId + "): " + source.toString();
+//            }
+//            @Override
+//            public void affectBehaviorBeforeFeedback(Behavior behavior) {
+//                // do nothing
+//            }
+//            @Override
+//            public EventEnvironmentFeedback getEnvironmentFeedback() {
+//                // TODO Auto-generated method stub
+//                return source.getEnvironmentFeedback();
+//            }
+//            
+//        }
+//        private String loggerId;
+//        public LoggingAttention(String loggerId) {
+//            this.loggerId = loggerId;
+//        }
+//        @Override
+//        public Event next() {
+//            return new EventTrackedByLogger(super.next(), loggerId);
+//        }
+//    }
     
     
     private static int intPropertyValue(ResourceConstants.NAME forName, ResourceBundle bundle) throws IllegalArgumentException {
@@ -295,16 +327,18 @@ public class TransportSystem {
     }
     
     static class Logging implements Runnable {
-        private Iterator<Event> iterator;
+        private Iterator<Event> eventIterator;
+        private Behavior loggingBehavior;
         
-        public Logging(Iterator<Event> iterator) {
-            this.iterator = iterator;
+        public Logging(Iterator<Event> eventIterator, Behavior loggingBehavior) {
+            this.eventIterator = eventIterator;
+            this.loggingBehavior = loggingBehavior;
         }
 
         @Override
         public void run() {
             while(true) {
-                LoggerFactory.getLogger(TransportSystem.class).info(iterator.next().toString());
+                eventIterator.next().affectBehavior(loggingBehavior);
             }
         }
         
