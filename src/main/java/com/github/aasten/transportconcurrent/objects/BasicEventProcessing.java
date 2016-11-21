@@ -16,9 +16,9 @@ import com.github.aasten.transportconcurrent.human.Attention;
 
 public class BasicEventProcessing implements Runnable, EventEnvironment, EventEnvironmentFeedback {
 
-    private volatile Set<Attention> allAttentions = new HashSet<>();
+    private final Set<Attention> allAttentions = new HashSet<>();
     private volatile Queue<Event> eventQueue = new ArrayDeque<Event>();
-    private final Object allAttentionsNotifiedAboutEvent = new Object();
+    private volatile Object allAttentionsNotifiedAboutEvent = new Object();
     private volatile Map<Event,Integer> currentlyNotifiedAttentionCount = new HashMap<>();
     // prevent from invoking run() method from several threads
     private final Object soleEventProcessing = new Object();

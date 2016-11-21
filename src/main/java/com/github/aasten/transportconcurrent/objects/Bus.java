@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent.EventType;
@@ -17,7 +18,7 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 
 // TODO seems to have to many tasks
-public class Bus implements EventEnvironment, IncomingEventsProcessing {
+public class Bus implements EventEnvironment, EventEnvironmentFeedback, IncomingEventsProcessing {
 
     private static final long WAIT_PASSENGERS_AT_DOORS_MSEC = 1000;
     
@@ -140,10 +141,16 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
                     currentStation = r.nextStation();
                     // wait for free place for bus if busy
                     currentStation.takeBusPlace();
-                    Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
-                                                         delegateEventProcessing);
-                    this.notifyAbout(arriving);
-                    currentStation.notifyAbout(arriving);
+                    {
+                        Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                                                             this);
+                        this.notifyAbout(arriving);
+                    }
+                    {
+                        Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                                currentStation);
+                        currentStation.notifyAbout(arriving);
+                    }
                     openAllDoors();
                     // wait for passengers to fill queues for exit and enter
                     Thread.sleep(WAIT_PASSENGERS_AT_DOORS_MSEC);
@@ -151,10 +158,16 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
                     // which has been formed for this time
                     // TODO infinite cycle may be here if passengers appear more and more
                     closeAllDoors();
-                    Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
-                                                          delegateEventProcessing);
-                    this.notifyAbout(departure);
-                    currentStation.notifyAbout(departure);
+                    {
+                        Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                                                              this);
+                        this.notifyAbout(departure);
+                    }
+                    {
+                        Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                                currentStation);
+                        currentStation.notifyAbout(departure);
+                    }
                     currentStation.releaseBusPlace();
                 } while(routeIterator.hasNext());
             } catch (InterruptedException e) {
@@ -167,6 +180,11 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
     @Override
     public String toString() {
         return busId;
+    }
+
+    @Override
+    public void eventWasNoticed(Event event) {
+        delegateEventProcessing.eventWasNoticed(event);
     }
     
 }

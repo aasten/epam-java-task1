@@ -11,7 +11,7 @@ import com.github.aasten.transportconcurrent.events.Event;
 public class QueuedAttention implements Attention, Iterator<Event> {
     
     private int EVENT_QUEUE_MAX_SIZE = 1000;
-    private final Queue<Event> eventQueue = new ArrayDeque<Event>(EVENT_QUEUE_MAX_SIZE);
+    private volatile Queue<Event> eventQueue = new ArrayDeque<Event>(EVENT_QUEUE_MAX_SIZE);
 
     public QueuedAttention() {
     }

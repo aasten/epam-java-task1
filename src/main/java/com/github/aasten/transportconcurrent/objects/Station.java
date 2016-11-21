@@ -3,10 +3,11 @@ package com.github.aasten.transportconcurrent.objects;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.human.Attention;
 
-public class Station implements EventEnvironment, IncomingEventsProcessing {
+public class Station implements EventEnvironment, EventEnvironmentFeedback, IncomingEventsProcessing {
     
     private final String name; 
     private BasicEventProcessing delegateEventProcessing = new BasicEventProcessing();
@@ -46,6 +47,11 @@ public class Station implements EventEnvironment, IncomingEventsProcessing {
     @Override
     public Runnable getEventProcessor() {
         return delegateEventProcessing;
+    }
+    
+    @Override
+    public void eventWasNoticed(Event event) {
+        delegateEventProcessing.eventWasNoticed(event);
     }
 
     // equals for stations with same name
