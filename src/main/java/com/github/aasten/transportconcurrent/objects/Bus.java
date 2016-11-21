@@ -73,7 +73,7 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
                 // notify passenger through own event environment
                 Event passengerEntered = new PassengerBusStationEvent(
                         passenger, this, currentStation, 
-                        EventType.PASSENGER_ENTERED_BUS);
+                        EventType.PASSENGER_ENTERED_BUS, delegateEventProcessing);
                 currentStation.notifyAbout(passengerEntered);
                 return true;
             } else {
@@ -101,7 +101,7 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
             }
             notifyAbout(new PassengerBusStationEvent(
                     passenger, this, currentStation, 
-                    EventType.PASSENGER_EXITED_BUS));
+                    EventType.PASSENGER_EXITED_BUS, delegateEventProcessing));
         }
     }
     
@@ -140,7 +140,8 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
                     currentStation = r.nextStation();
                     // wait for free place for bus if busy
                     currentStation.takeBusPlace();
-                    Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED);
+                    Event arriving = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                                                         delegateEventProcessing);
                     this.notifyAbout(arriving);
                     currentStation.notifyAbout(arriving);
                     openAllDoors();
@@ -150,7 +151,8 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
                     // which has been formed for this time
                     // TODO infinite cycle may be here if passengers appear more and more
                     closeAllDoors();
-                    Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED);
+                    Event departure = new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                                                          delegateEventProcessing);
                     this.notifyAbout(departure);
                     currentStation.notifyAbout(departure);
                     currentStation.releaseBusPlace();

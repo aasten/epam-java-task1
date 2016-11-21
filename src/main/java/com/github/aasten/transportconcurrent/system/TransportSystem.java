@@ -12,6 +12,8 @@ import java.util.ResourceBundle;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
+import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
+import com.github.aasten.transportconcurrent.events.FeedingBackEvent;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.human.Passenger;
@@ -225,25 +227,26 @@ public class TransportSystem {
     }
     
     private static class LoggingAttention extends QueuedAttention {
-        private static class EventTrackedByLogger implements Event {
+        private static class EventTrackedByLogger extends FeedingBackEvent {
             private Event source;
             private String loggerId;
-            public EventTrackedByLogger(Event event, String loggerId) {
+            public EventTrackedByLogger(FeedingBackEvent event, String loggerId) {
                 source = event;
                 this.loggerId = loggerId;
-            }
-            @Override
-            public Date getTimestamp() {
-                return source.getTimestamp();
-            }
-            @Override
-            public void affectBehavior(Behavior behavior) {
-                source.affectBehavior(behavior);
             }
             // Decorating here
             @Override
             public String toString() {
                 return "(" + loggerId + "): " + source.toString();
+            }
+            @Override
+            public void affectBehaviorBeforeFeedback(Behavior behavior) {
+                // do nothing
+            }
+            @Override
+            public EventEnvironmentFeedback getEnvironmentFeedback() {
+                // TODO Auto-generated method stub
+                return source.ge;
             }
             
         }

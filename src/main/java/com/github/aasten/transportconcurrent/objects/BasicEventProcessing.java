@@ -14,12 +14,12 @@ import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
 import com.github.aasten.transportconcurrent.human.Attention;
 
-public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback {
+public class BasicEventProcessing implements Runnable, EventEnvironment, EventEnvironmentFeedback {
 
     Set<Attention> allAttentions = new HashSet<>();
     private final Queue<Event> eventQueue = new ArrayDeque<Event>();
     private final Object allAttentionsNotifiedAboutEvent = new Object();
-    private final Map<Event,Set<Attention>> currentlyNotifiedAttentions = new HashMap<>();
+    private final Map<Event,Integer> currentlyNotifiedAttentionCount = new HashMap<>();
     // prevent from invoking run() method from several threads
     private final Object soleEventProcessing = new Object();
     
@@ -27,13 +27,13 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
     public void subscribeToEvents(Attention attention) {
         synchronized(allAttentions) {
             allAttentions.add(attention);
-            synchronized(currentlyNotifiedAttentions) {
+            synchronized(currentlyNotifiedAttentionCount) {
                 // add this attention to actual events
 //                for(Event keyEvent : currentlyNotifiedAttentions.keySet()) {
 //                    currentlyNotifiedAttentions.get(keyEvent).add(attention);
 //                }
-                for(Entry<Event,Set<Attention>> entry : currentlyNotifiedAttentions.entrySet()) {
-                    entry.getValue().add(attention);
+                for(Entry<Event,Integer> entry : currentlyNotifiedAttentionCount.entrySet()) {
+                    entry.setValue(entry.getValue() + 1);
                 }
             }
         }
@@ -43,13 +43,13 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
     public void unSubscribe(Attention attention) {
         synchronized(allAttentions) {
             allAttentions.remove(attention);
-            synchronized(currentlyNotifiedAttentions) {
+            synchronized(currentlyNotifiedAttentionCount) {
                 // add this attention to actual events
 //                for(Event keyEvent : currentlyNotifiedAttentions.keySet()) {
 //                    currentlyNotifiedAttentions.get(keyEvent).remove(attention);
 //                }
-                for(Entry<Event,Set<Attention>> entry : currentlyNotifiedAttentions.entrySet()) {
-                    entry.getValue().remove(attention);
+                for(Entry<Event,Integer> entry : currentlyNotifiedAttentionCount.entrySet()) {
+                    entry.setValue(entry.getValue() - 1);
                 }
             }
         }
@@ -58,9 +58,9 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
     @Override
     public void notifyAbout(Event event) {
         synchronized(eventQueue) {
-            synchronized(currentlyNotifiedAttentions) {
-                synchronized(allAttentions) {
-                    currentlyNotifiedAttentions.put(event, new HashSet<>(allAttentions));
+            synchronized(allAttentions) {
+                synchronized(currentlyNotifiedAttentionCount) {
+                    currentlyNotifiedAttentionCount.put(event, allAttentions.size());
                 }
             }
             eventQueue.add(event);
@@ -80,8 +80,8 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
     }
     
     private boolean anyAttentionNotNotifiedAbout(Event event) {
-        synchronized (currentlyNotifiedAttentions) {
-            return !currentlyNotifiedAttentions.get(event).isEmpty();
+        synchronized (currentlyNotifiedAttentionCount) {
+            return currentlyNotifiedAttentionCount.get(event) > 0;
         }
     }
 
@@ -95,7 +95,6 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
                 synchronized(allAttentions) {
                     for(Attention attention : allAttentions) {
                         attention.notifyAbout(currentEvent);
-                        attentionWasNotified(attention, currentEvent);
                     }
                 }
             }
@@ -118,11 +117,11 @@ public class BasicEventProcessing implements Runnable, EventEnvironmentFeedback 
     }
     
     @Override
-    public void attentionWasNotified(Attention attention, Event event) {
+    public void eventWasNoticed(Event event) {
         synchronized (allAttentionsNotifiedAboutEvent) {
-            synchronized (currentlyNotifiedAttentions) {
-                currentlyNotifiedAttentions.get(event).remove(attention);
-                if(currentlyNotifiedAttentions.get(event).isEmpty()) {
+            synchronized (currentlyNotifiedAttentionCount) {
+                currentlyNotifiedAttentionCount.put(event,currentlyNotifiedAttentionCount.get(event) - 1);
+                if(currentlyNotifiedAttentionCount.get(event) < 1) {
                     allAttentionsNotifiedAboutEvent.notifyAll();
                 }
             }
