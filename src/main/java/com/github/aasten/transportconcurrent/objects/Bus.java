@@ -2,14 +2,19 @@ package com.github.aasten.transportconcurrent.objects;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.Event;
 import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
+import com.github.aasten.transportconcurrent.events.EventWithFeedback;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
 import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent.EventType;
@@ -32,8 +37,11 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
     private double initialDelay;
     private BasicEventProcessing delegateEventProcessing = new BasicEventProcessing();
     // waiting for queues populated after arriving before entering/exiting
-    private final Object passengerEntering = new Object();
+    private final Object passengerInOut = new Object();
     private final String busId;
+    private final Set<Passenger> passengersInside = new HashSet<>();
+    private final Object allAttentionsNotified = new Object();
+    private final Map<Event,Set<Object>> unnotified = new HashMap<>();
     
     public Bus(String id, int capacity, int doorsCount, Route route, double averSpeedMeterPerSec,
             double atFirstStationAfterSeconds) {
@@ -62,19 +70,24 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
     }
     
     public boolean isFull() {
-        synchronized(passengerEntering) {
+        synchronized(passengerInOut) {
             return currentPlacesTaken >= capacity;
         }
     }
     
     boolean enter(Passenger passenger) {
-        synchronized(passengerEntering) {
+        synchronized(passengerInOut) {
             if(!isFull()) {
                 currentPlacesTaken++;
-                // notify passenger through own event environment
-                currentStation.notifyAbout(new PassengerBusStationEvent(
+                passengersInside.add(passenger);
+                // notifying the passenger directly
+                // do not waiting for his reaction
+                passenger.getAttention().notifyAbout(new PassengerBusStationEvent(
                         passenger, this, currentStation, 
-                        EventType.PASSENGER_ENTERED_BUS, currentStation));
+                        EventType.PASSENGER_ENTERED_BUS));
+//                currentStation.notifyAbout(new PassengerBusStationEvent(
+//                        passenger, this, currentStation, 
+//                        EventType.PASSENGER_ENTERED_BUS, currentStation));
                 return true;
             } else {
                 return false;
@@ -95,13 +108,19 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
     
     
     void exit(Passenger passenger) {
-        synchronized(passengerEntering) {
+        synchronized(passengerInOut) {
             if(currentPlacesTaken > 0 ) {
                 currentPlacesTaken--;
             }
-            notifyAbout(new PassengerBusStationEvent(
+            passengersInside.remove(passenger);
+            // notifying the passenger directly
+            // do not waiting for his reaction
+            passenger.getAttention().notifyAbout(new PassengerBusStationEvent(
                     passenger, this, currentStation, 
-                    EventType.PASSENGER_EXITED_BUS, this));
+                    EventType.PASSENGER_EXITED_BUS));
+//            notifyAbout(new PassengerBusStationEvent(
+//                    passenger, this, currentStation, 
+//                    EventType.PASSENGER_EXITED_BUS, this));
         }
     }
     
@@ -120,6 +139,24 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
     public void notifyAbout(Event event) {
         // will wait until all the attentions are notified
         delegateEventProcessing.notifyAbout(event); 
+    }
+    
+    private void notifyPassengersInsideAboutAndWaitFeedback(EventWithFeedback event) {
+        synchronized(allAttentionsNotified) {
+        
+            if(!unnotified.containsKey(event)) {
+                unnotified.put(event, new HashSet<>(passengersInside.size()));
+            }
+            unnotified.get(event).addAll(passengersInside);
+            delegateEventProcessing.notifyAbout(event);
+            do {
+                try {
+                    allAttentionsNotified.wait();
+                } catch (InterruptedException e) {
+                    LoggerFactory.getLogger(getClass()).warn(e.getMessage());
+                }
+            } while(!unnotified.get(event).isEmpty());
+        }
     }
 
     @Override
@@ -140,8 +177,10 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
                     currentStation = r.nextStation();
                     // wait for free place for bus if busy
                     currentStation.takeBusPlace();
-                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+                    notifyPassengersInsideAboutAndWaitFeedback(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
                             this));
+//                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
+//                            this));
                     currentStation.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_ARRIVED,
                             currentStation));
                     openAllDoors();
@@ -152,8 +191,10 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
                     // TODO infinite cycle may be here if passengers appear more and more
                     closeAllDoors();
 
-                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+                    notifyPassengersInsideAboutAndWaitFeedback(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
                             this));
+//                    this.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
+//                            this));
 
                     currentStation.notifyAbout(new BusStationEvent(this,currentStation,BusStationEvent.EventType.BUS_DEPARTURED,
                             currentStation));
@@ -173,8 +214,11 @@ public class Bus implements EventEnvironment, EventEnvironmentFeedback, Incoming
     }
 
     @Override
-    public void eventWasNoticed(Event event) {
-        delegateEventProcessing.eventWasNoticed(event);
+    public void eventWasNoticedBy(Event event, Object objectNoticed) {
+        synchronized(allAttentionsNotified) {
+            unnotified.get(event).remove(objectNoticed);
+            allAttentionsNotified.notifyAll();
+        }
     }
     
 }

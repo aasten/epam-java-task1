@@ -36,6 +36,7 @@ public class PassengerBehaviorAtStation extends DefaultPassengerBehavior {
                     } );
             // try enter
             doorsToEnter.enqueueEnter(passenger);
+            event.getEnvironmentFeedback().eventWasNoticedBy(event, passenger);
             break;
         default:
             break;

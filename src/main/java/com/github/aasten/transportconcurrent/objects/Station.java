@@ -49,11 +49,6 @@ public class Station implements EventEnvironment, EventEnvironmentFeedback, Inco
         return delegateEventProcessing;
     }
     
-    @Override
-    public void eventWasNoticed(Event event) {
-        delegateEventProcessing.eventWasNoticed(event);
-    }
-
     // equals for stations with same name
     @Override
     public boolean equals(Object obj) {
@@ -91,5 +86,11 @@ public class Station implements EventEnvironment, EventEnvironmentFeedback, Inco
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public void eventWasNoticedBy(Event event, Object objectNoticed) {
+        // TODO Auto-generated method stub
+        
     }
 }

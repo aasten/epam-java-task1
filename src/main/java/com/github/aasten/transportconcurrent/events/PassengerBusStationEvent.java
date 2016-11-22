@@ -5,7 +5,8 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
-public class PassengerBusStationEvent extends FeedingBackEvent implements StationEvent, BusEvent, PassengerEvent{
+public class PassengerBusStationEvent extends TimestampEvent /*FeedingBackEvent*/ 
+    implements StationEvent, BusEvent, PassengerEvent {
 
     public enum EventType {
         PASSENGER_ENTERED_BUS,
@@ -16,16 +17,14 @@ public class PassengerBusStationEvent extends FeedingBackEvent implements Statio
     private final Bus bus;
     private final Station station;
     private final EventType type;
-    private final EventEnvironmentFeedback feedback;
     
     public PassengerBusStationEvent(Passenger passenger, Bus bus, Station station,
-            EventType type, EventEnvironmentFeedback feedback)
+            EventType type)
     {
         this.passenger = passenger;
         this.bus = bus;
         this.station = station;
         this.type = type;
-        this.feedback = feedback;
     }
     
     @Override
@@ -39,13 +38,9 @@ public class PassengerBusStationEvent extends FeedingBackEvent implements Statio
     
     public EventType getType() { return type; }
 
+    
     @Override
-    public EventEnvironmentFeedback getEnvironmentFeedback() {
-        return feedback;
-    }
-
-    @Override
-    public void affectBehaviorBeforeFeedback(Behavior behavior) {
+    public void affectBehavior(Behavior behavior) {
         behavior.behaveAccording(this);
     }
     

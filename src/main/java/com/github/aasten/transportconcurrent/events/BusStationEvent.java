@@ -4,7 +4,7 @@ import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
-public class BusStationEvent extends FeedingBackEvent implements BusEvent, StationEvent {
+public class BusStationEvent extends TimestampEvent implements BusEvent, StationEvent, EventWithFeedback {
 
     public enum EventType {
         BUS_ARRIVED,
@@ -53,7 +53,7 @@ public class BusStationEvent extends FeedingBackEvent implements BusEvent, Stati
     }
 
     @Override
-    public void affectBehaviorBeforeFeedback(Behavior behavior) {
+    public void affectBehavior(Behavior behavior) {
         behavior.behaveAccording(this);
     }
 
