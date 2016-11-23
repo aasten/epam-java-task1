@@ -35,10 +35,6 @@ public class Passenger extends Human implements HavingTarget {
         }
     }
 
-//    public Role getRole() {
-        // TODO Auto-generated method stub
-//        return role;
-//    }
 
     public boolean isTargetAchieved() {
         return targetIsAchieved;

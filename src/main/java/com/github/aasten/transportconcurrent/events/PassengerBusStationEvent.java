@@ -5,7 +5,7 @@ import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
-public class PassengerBusStationEvent extends TimestampEvent /*FeedingBackEvent*/ 
+public class PassengerBusStationEvent extends TimestampEvent  
     implements StationEvent, BusEvent, PassengerEvent {
 
     public enum EventType {

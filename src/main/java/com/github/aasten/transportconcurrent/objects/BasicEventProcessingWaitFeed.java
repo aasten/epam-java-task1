@@ -2,7 +2,6 @@ package com.github.aasten.transportconcurrent.objects;
 
 import java.util.AbstractMap;
 import java.util.ArrayDeque;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,10 +42,6 @@ public class BasicEventProcessingWaitFeed implements Runnable, EventEnvironment,
             this.feedback = feedback;
         }
         
-        @Override
-        public Date getTimestamp() {
-            return originalEvent.getTimestamp();
-        }
 
         @Override
         public void affectBehavior(Behavior behavior) {

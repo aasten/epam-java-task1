@@ -23,13 +23,14 @@ public class QueuedAttention implements Attention, Iterator<Event> {
         }
     }
 
-            
+    @Override        
     public boolean hasNext() {
         synchronized(eventQueue) {
             return !eventQueue.isEmpty();
         }
     }
 
+    @Override
     public Event next() {
         synchronized(eventQueue) {
             if(false == hasNext()) {

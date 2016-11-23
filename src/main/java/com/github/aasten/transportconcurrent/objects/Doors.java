@@ -72,7 +72,7 @@ public class Doors {
                     }
                  
                     synchronized(exitQueue) {
-                        while(!exitQueue.isEmpty() /*&& doorState.isOpen()*/) {
+                        while(!exitQueue.isEmpty()) {
                             exit(exitQueue.remove());
                             if(exitQueue.isEmpty()) {
                              // wait for passenger if is not enqueued yet
@@ -81,7 +81,7 @@ public class Doors {
                         }
                     }
                     synchronized(enterQueue) {
-                        while((!enterQueue.isEmpty() && !bus.isFull())  /*&& doorState.isOpen()*/) {
+                        while((!enterQueue.isEmpty() && !bus.isFull())) {
                             tryEnter(enterQueue.remove());
                             if(enterQueue.isEmpty() && !bus.isFull()) {
                                 // wait for passenger if is not enqueued yet
@@ -94,9 +94,6 @@ public class Doors {
                         }
                     }
                         
-    //                    synchronized(anyPassengerAtDoors) {
-    //                        if()
-    //                    }
                         
                 } catch (InterruptedException e) {
                     LoggerFactory.getLogger(getClass()).warn(e.getMessage());

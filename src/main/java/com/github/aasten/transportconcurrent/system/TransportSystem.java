@@ -179,23 +179,6 @@ public class TransportSystem {
         }
         addRunnablesToNewDaemonThreads(threads, busRouteWalkings);
         
-//        // Logging
-//        {
-//        // several attentions to show origin of events in common log
-//        QueuedAttention loggingAttentionInsideBuses = new QueuedAttention();
-//        for(final EventEnvironment e : buses) {
-//            e.subscribeToEvents(loggingAttentionInsideBuses);
-//        }
-//        QueuedAttention loggingAttentionAtStations = new QueuedAttention();
-//        for(final EventEnvironment e : stationList) {
-//            e.subscribeToEvents(loggingAttentionAtStations);
-//        }
-//        
-//        List<Runnable> loggingProcesses = new ArrayList<>();
-//        loggingProcesses.add(new Logging(loggingAttentionInsideBuses, new LoggingBehavior("Inside bus")));
-//        loggingProcesses.add(new Logging(loggingAttentionAtStations, new LoggingBehavior("At station")));
-//        addRunnablesToNewDaemonThreads(threads, loggingProcesses);
-//        }
         
         // doorsThread
         List<Runnable> doorsProcesses = new ArrayList<>();
@@ -228,71 +211,6 @@ public class TransportSystem {
         LoggerFactory.getLogger(TransportSystem.class).trace("Initialized and started");
         
     }
-    
-//    private static class LoggingBehavior implements Behavior {
-//
-//        private final String loggerId;
-//        
-//        public LoggingBehavior(String loggerId) {
-//            this.loggerId = loggerId;
-//        }
-//        
-//        @Override
-//        public void behaveAccording(BusStationEvent event) {
-//            logEvent(event);
-//        }
-//
-//        @Override
-//        public void behaveAccording(PassengerBusStationEvent event) {
-//            logEvent(event);
-//        }
-//
-//        @Override
-//        public void behaveAccording(Finish finish) {
-//            logEvent(finish);
-//        }
-//        
-//        private void logEvent(Event event) {
-//            LoggerFactory.getLogger(TransportSystem.class).info("(" + loggerId + "): " + event.toString());            
-//        }
-//        
-//        
-//        
-//    }
-    
-//    private static class LoggingAttention extends QueuedAttention {
-//        private static class EventTrackedByLogger extends FeedingBackEvent {
-//            private FeedingBackEvent source;
-//            private String loggerId;
-//            public EventTrackedByLogger(FeedingBackEvent event, String loggerId) {
-//                source = event;
-//                this.loggerId = loggerId;
-//            }
-//            // Decorating here
-//            @Override
-//            public String toString() {
-//                return "(" + loggerId + "): " + source.toString();
-//            }
-//            @Override
-//            public void affectBehaviorBeforeFeedback(Behavior behavior) {
-//                // do nothing
-//            }
-//            @Override
-//            public EventEnvironmentFeedback getEnvironmentFeedback() {
-//                // TODO Auto-generated method stub
-//                return source.getEnvironmentFeedback();
-//            }
-//            
-//        }
-//        private String loggerId;
-//        public LoggingAttention(String loggerId) {
-//            this.loggerId = loggerId;
-//        }
-//        @Override
-//        public Event next() {
-//            return new EventTrackedByLogger(super.next(), loggerId);
-//        }
-//    }
     
     
     private static int intPropertyValue(ResourceConstants.NAME forName, ResourceBundle bundle) throws IllegalArgumentException {
@@ -368,21 +286,4 @@ public class TransportSystem {
         
     }
     
-//    static class Logging implements Runnable {
-//        private Iterator<Event> eventIterator;
-//        private Behavior loggingBehavior;
-//        
-//        public Logging(Iterator<Event> eventIterator, Behavior loggingBehavior) {
-//            this.eventIterator = eventIterator;
-//            this.loggingBehavior = loggingBehavior;
-//        }
-//
-//        @Override
-//        public void run() {
-//            while(true) {
-//                eventIterator.next().affectBehavior(loggingBehavior);
-//            }
-//        }
-//        
-//    }
 }

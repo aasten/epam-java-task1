@@ -16,7 +16,6 @@ import com.github.aasten.transportconcurrent.human.Attention;
 import com.github.aasten.transportconcurrent.human.Passenger;
 import com.github.aasten.transportconcurrent.objects.Route.RouteElement;
 
-// TODO seems to have to many tasks
 public class Bus implements EventEnvironment, IncomingEventsProcessing {
 
     // TODO try without this, because all the passengers are to have applied their behaviors
@@ -42,7 +41,8 @@ public class Bus implements EventEnvironment, IncomingEventsProcessing {
         busId = id;
         this.capacity = capacity;
         if(doorsCount < 1) {
-            // TODO log this
+            LoggerFactory.getLogger(getClass()).warn(
+                    "Got doors count value is {} for the bus {}. Used {} instead",doorsCount,this,1);
             doorsCount = 1;
         }
         doors = Collections.unmodifiableList(createDoorsList(doorsCount, this));

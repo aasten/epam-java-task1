@@ -7,8 +7,4 @@ public interface EventEnvironment {
     void subscribeToEvents(Attention attention);
     void unSubscribe(Attention attention);
     void notifyAbout(Event event);
-//    /**
-//     * Infinite loop of events processing. Designed to be run in a daemon thread.
-//     */
-//    void launchInfinitely();
 }

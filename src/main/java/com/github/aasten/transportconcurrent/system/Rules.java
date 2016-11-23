@@ -10,14 +10,6 @@ import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
 public class Rules {
-//    public static Behavior<Passenger> passengerBehaviorOutside() {
-//        return new Behavior<Passenger>() {
-//            public void behaveAccording(Event event, Passenger managed) {
-//                // TODO Auto-generated method stub
-//                
-//            }           
-//        }
-//    }
     
     public static PassengerBehaviors reactOnEventForPassenger(
             final BusStationEvent event, 

@@ -8,9 +8,6 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
 
     public enum EventType {
         BUS_ARRIVED,
-//        DOORS_OPENED,
-//        BUS_FULL,
-//        DOORS_CLOSED,
         BUS_DEPARTURED,
     }
     
