@@ -36,7 +36,6 @@ public class PassengerBehaviorInsideBus extends DefaultPassengerBehavior {
                         } );
                 // exit
                 doorsToExit.enqueueExit(passenger);
-                event.getEnvironmentFeedback().eventWasNoticedBy(event, passenger);
             }
             break;
         default:

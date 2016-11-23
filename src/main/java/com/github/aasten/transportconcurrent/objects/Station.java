@@ -3,14 +3,13 @@ package com.github.aasten.transportconcurrent.objects;
 import org.slf4j.LoggerFactory;
 
 import com.github.aasten.transportconcurrent.events.Event;
-import com.github.aasten.transportconcurrent.events.EventEnvironmentFeedback;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
 import com.github.aasten.transportconcurrent.human.Attention;
 
-public class Station implements EventEnvironment, EventEnvironmentFeedback, IncomingEventsProcessing {
+public class Station implements EventEnvironment, IncomingEventsProcessing {
     
     private final String name; 
-    private BasicEventProcessing delegateEventProcessing = new BasicEventProcessing();
+    private BasicEventProcessingWaitFeed delegateEventProcessing = new BasicEventProcessingWaitFeed();
     private final int busesAtOnce;
     private int busesCurrently = 0;
     
@@ -88,9 +87,4 @@ public class Station implements EventEnvironment, EventEnvironmentFeedback, Inco
         return name;
     }
 
-    @Override
-    public void eventWasNoticedBy(Event event, Object objectNoticed) {
-        // TODO Auto-generated method stub
-        
-    }
 }

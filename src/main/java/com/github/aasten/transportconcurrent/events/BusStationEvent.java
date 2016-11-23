@@ -4,7 +4,7 @@ import com.github.aasten.transportconcurrent.human.Behavior;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Station;
 
-public class BusStationEvent extends TimestampEvent implements BusEvent, StationEvent, EventWithFeedback {
+public class BusStationEvent extends TimestampEvent implements BusEvent, StationEvent {
 
     public enum EventType {
         BUS_ARRIVED,
@@ -17,13 +17,11 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
     private final Bus bus;
     private final Station station;
     private final EventType type;
-    private final EventEnvironmentFeedback feedback;
     
-    public BusStationEvent(Bus bus, Station station, EventType type, EventEnvironmentFeedback feedback) {
+    public BusStationEvent(Bus bus, Station station, EventType type) {
         this.bus = bus;
         this.station = station;
         this.type = type;
-        this.feedback = feedback;
     }
 
     public Station getStation() { return station; }
@@ -47,10 +45,6 @@ public class BusStationEvent extends TimestampEvent implements BusEvent, Station
         return ret;
     }
 
-    @Override
-    public EventEnvironmentFeedback getEnvironmentFeedback() {
-        return feedback;
-    }
 
     @Override
     public void affectBehavior(Behavior behavior) {

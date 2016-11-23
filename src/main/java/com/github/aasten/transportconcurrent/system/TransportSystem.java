@@ -1,23 +1,21 @@
 package com.github.aasten.transportconcurrent.system;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Queue;
 import java.util.ResourceBundle;
 
 import org.slf4j.LoggerFactory;
 
-import com.github.aasten.transportconcurrent.events.BusStationEvent;
 import com.github.aasten.transportconcurrent.events.Event;
-import com.github.aasten.transportconcurrent.events.Finish;
 import com.github.aasten.transportconcurrent.events.IncomingEventsProcessing;
-import com.github.aasten.transportconcurrent.events.PassengerBusStationEvent;
-import com.github.aasten.transportconcurrent.human.Behavior;
+import com.github.aasten.transportconcurrent.human.Attention;
 import com.github.aasten.transportconcurrent.human.Passenger;
-import com.github.aasten.transportconcurrent.human.QueuedAttention;
 import com.github.aasten.transportconcurrent.objects.Bus;
 import com.github.aasten.transportconcurrent.objects.Doors;
 import com.github.aasten.transportconcurrent.objects.EventEnvironment;
@@ -143,6 +141,10 @@ public class TransportSystem {
         
         addRunnablesToNewThreads(threads, passengerProcesses);
         
+        LoggingEnvironment loggingEnvironment = new LoggingEnvironment();
+        addRunnablesToNewDaemonThreads(threads, Collections.singletonList(loggingEnvironment));
+        
+        
         List<Bus> buses = new ArrayList<>();
         
         {
@@ -153,7 +155,7 @@ public class TransportSystem {
         int busSpeed = intPropertyValue(ResourceConstants.NAME.BUS_AVERAGE_SPEED_METER_PER_SEC, resourceBundle);
         
         for(int i = 0; i < busCount; i++) {
-            buses.add(new Bus("B"+(i+1),busCapacity,doorsCount,towardsBackwardsCyclicRoute,busSpeed,busInterval*(i+1)));
+            buses.add(new Bus("B"+(i+1),busCapacity,doorsCount,towardsBackwardsCyclicRoute,busSpeed,busInterval*(i+1),loggingEnvironment));
         }
 
         }
@@ -177,23 +179,23 @@ public class TransportSystem {
         }
         addRunnablesToNewDaemonThreads(threads, busRouteWalkings);
         
-        // Logging
-        {
-        // several attentions to show origin of events in common log
-        QueuedAttention loggingAttentionInsideBuses = new QueuedAttention();
-        for(final EventEnvironment e : buses) {
-            e.subscribeToEvents(loggingAttentionInsideBuses);
-        }
-        QueuedAttention loggingAttentionAtStations = new QueuedAttention();
-        for(final EventEnvironment e : stationList) {
-            e.subscribeToEvents(loggingAttentionAtStations);
-        }
-        
-        List<Runnable> loggingProcesses = new ArrayList<>();
-        loggingProcesses.add(new Logging(loggingAttentionInsideBuses, new LoggingBehavior("Inside bus")));
-        loggingProcesses.add(new Logging(loggingAttentionAtStations, new LoggingBehavior("At station")));
-        addRunnablesToNewDaemonThreads(threads, loggingProcesses);
-        }
+//        // Logging
+//        {
+//        // several attentions to show origin of events in common log
+//        QueuedAttention loggingAttentionInsideBuses = new QueuedAttention();
+//        for(final EventEnvironment e : buses) {
+//            e.subscribeToEvents(loggingAttentionInsideBuses);
+//        }
+//        QueuedAttention loggingAttentionAtStations = new QueuedAttention();
+//        for(final EventEnvironment e : stationList) {
+//            e.subscribeToEvents(loggingAttentionAtStations);
+//        }
+//        
+//        List<Runnable> loggingProcesses = new ArrayList<>();
+//        loggingProcesses.add(new Logging(loggingAttentionInsideBuses, new LoggingBehavior("Inside bus")));
+//        loggingProcesses.add(new Logging(loggingAttentionAtStations, new LoggingBehavior("At station")));
+//        addRunnablesToNewDaemonThreads(threads, loggingProcesses);
+//        }
         
         // doorsThread
         List<Runnable> doorsProcesses = new ArrayList<>();
@@ -227,36 +229,36 @@ public class TransportSystem {
         
     }
     
-    private static class LoggingBehavior implements Behavior {
-
-        private final String loggerId;
-        
-        public LoggingBehavior(String loggerId) {
-            this.loggerId = loggerId;
-        }
-        
-        @Override
-        public void behaveAccording(BusStationEvent event) {
-            logEvent(event);
-        }
-
-        @Override
-        public void behaveAccording(PassengerBusStationEvent event) {
-            logEvent(event);
-        }
-
-        @Override
-        public void behaveAccording(Finish finish) {
-            logEvent(finish);
-        }
-        
-        private void logEvent(Event event) {
-            LoggerFactory.getLogger(TransportSystem.class).info("(" + loggerId + "): " + event.toString());            
-        }
-        
-        
-        
-    }
+//    private static class LoggingBehavior implements Behavior {
+//
+//        private final String loggerId;
+//        
+//        public LoggingBehavior(String loggerId) {
+//            this.loggerId = loggerId;
+//        }
+//        
+//        @Override
+//        public void behaveAccording(BusStationEvent event) {
+//            logEvent(event);
+//        }
+//
+//        @Override
+//        public void behaveAccording(PassengerBusStationEvent event) {
+//            logEvent(event);
+//        }
+//
+//        @Override
+//        public void behaveAccording(Finish finish) {
+//            logEvent(finish);
+//        }
+//        
+//        private void logEvent(Event event) {
+//            LoggerFactory.getLogger(TransportSystem.class).info("(" + loggerId + "): " + event.toString());            
+//        }
+//        
+//        
+//        
+//    }
     
 //    private static class LoggingAttention extends QueuedAttention {
 //        private static class EventTrackedByLogger extends FeedingBackEvent {
@@ -326,21 +328,61 @@ public class TransportSystem {
         }
     }
     
-    static class Logging implements Runnable {
-        private Iterator<Event> eventIterator;
-        private Behavior loggingBehavior;
-        
-        public Logging(Iterator<Event> eventIterator, Behavior loggingBehavior) {
-            this.eventIterator = eventIterator;
-            this.loggingBehavior = loggingBehavior;
-        }
+    private static class LoggingEnvironment implements EventEnvironment, Runnable {
+        private Queue<Event> eventQueue = new ArrayDeque<>();
 
         @Override
         public void run() {
             while(true) {
-                eventIterator.next().affectBehavior(loggingBehavior);
+                synchronized (eventQueue) {
+                    if(eventQueue.isEmpty()) {
+                        try {
+                            eventQueue.wait();
+                        } catch (InterruptedException e) {
+                            LoggerFactory.getLogger(TransportSystem.class).warn(e.getMessage());
+                        }
+                    }
+                    LoggerFactory.getLogger(TransportSystem.class).info(eventQueue.poll().toString());
+                }
+            }
+        }
+
+        @Override
+        public void subscribeToEvents(Attention attention) {
+            // do nothing
+        }
+
+        @Override
+        public void unSubscribe(Attention attention) {
+            // do nothing
+        }
+
+        @Override
+        public void notifyAbout(Event event) {
+            synchronized (eventQueue) {
+                eventQueue.add(event);
+                eventQueue.notifyAll();
             }
         }
         
+        
     }
+    
+//    static class Logging implements Runnable {
+//        private Iterator<Event> eventIterator;
+//        private Behavior loggingBehavior;
+//        
+//        public Logging(Iterator<Event> eventIterator, Behavior loggingBehavior) {
+//            this.eventIterator = eventIterator;
+//            this.loggingBehavior = loggingBehavior;
+//        }
+//
+//        @Override
+//        public void run() {
+//            while(true) {
+//                eventIterator.next().affectBehavior(loggingBehavior);
+//            }
+//        }
+//        
+//    }
 }
