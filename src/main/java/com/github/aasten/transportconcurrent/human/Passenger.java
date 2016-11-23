@@ -14,8 +14,7 @@ public class Passenger extends Human implements HavingTarget {
     public Passenger(String id, Station initial, Station destination) {
         this.id = id;
         this.destination = destination;
-        currentBehavior = new PassengerBehaviorAtStation(this, this.destination);
-        initial.subscribeToEvents(attention);
+        currentBehavior = new PassengerBehaviorAtStation(this, initial);
     }
     
     public Attention getAttention() {

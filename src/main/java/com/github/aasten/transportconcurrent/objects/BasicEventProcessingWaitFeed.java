@@ -99,12 +99,6 @@ public class BasicEventProcessingWaitFeed implements Runnable, EventEnvironment,
             }
             final String sessionID = genUID();
             notificationSessions.put(sessionID, newSessionEntry);
-//        synchronized (allAttentionsNotifiedAboutEvent) {
-//            synchronized(allAttentions) {
-//                synchronized(currentlyNotifiedAttentionCount) {
-//                    currentlyNotifiedAttentionCount.put(event, allAttentions.size());
-//                }
-//            }
             synchronized(eventQueue) {
                 eventQueue.add(new AbstractMap.SimpleEntry<>(event, sessionID));
                 // actually, notifyOne might be used for the one-threaded launchInfinitely() call
@@ -112,12 +106,13 @@ public class BasicEventProcessingWaitFeed implements Runnable, EventEnvironment,
                 eventQueue.notifyAll();
             }
             try {
-                do {
+                while(!notificationSessions.get(sessionID).getValue().isEmpty()) {
                     notificationSessions.wait();
-                } while(notificationSessions.containsKey(sessionID));
+                } 
             } catch (InterruptedException e) {
                 LoggerFactory.getLogger(getClass()).warn(e.getMessage());
             }
+            notificationSessions.remove(sessionID);
         }
     }
     
@@ -176,7 +171,6 @@ public class BasicEventProcessingWaitFeed implements Runnable, EventEnvironment,
                 }
                 if(found) {
                     if(e.getValue().getValue().isEmpty()) {
-                        notificationSessions.remove(e.getKey());
                         notificationSessions.notifyAll();
                     }
                     break;
